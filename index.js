@@ -2,6 +2,8 @@
 Copyright 2014 CREATE-NET
 Developed for COMPOSE project (compose-project.eu)
 
+@author Luca Capra <luca.capra@create-net.org>
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -20,7 +22,7 @@ limitations under the License.
 
     var composeDeps = [
         'bluebird', 'stompjs',
-        'utils/List', 'client', 'WebObject', 'ServiceObject',
+        'utils/List', 'client', 'WebObject', 'ServiceObject', 'Idm',
         'platforms/stomp/browser', 'platforms/mqtt/browser', 'platforms/http/browser'
     ];
 
@@ -43,7 +45,11 @@ limitations under the License.
         config.url = "http://api.servioticy.com";
         config.apiKey = null;
 
-        config.transport = null;
+        config.transport = 'http';
+
+        config.idm = {
+            url: 'http://132.231.11.217:8080'
+        };
 
         var registerUrl = "http://www.servioticy.com/?page_id=73";
 
@@ -545,8 +551,25 @@ limitations under the License.
         };
     };
 
+    Compose.prototype.getIdm = function() {
+
+        if(!this.idm) {
+
+            // ensure deps
+            this.lib.Promise = this.lib.Promise || this.util.getPromiseLib();
+            this.lib.Client = this.lib.Client || this.util.setupModule("client");
+
+            var Idm = this.util.setupModule("Idm").Idm;
+            this.idm = new Idm();
+        }
+
+        return this.idm;
+    };
+
     // init library, will act as a factory when setup is called multiple time
     var compose = new Compose;
+
+
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
         module.exports = compose;

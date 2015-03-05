@@ -2,6 +2,8 @@
 Copyright 2014 CREATE-NET
 Developed for COMPOSE project (compose-project.eu)
 
+@author Luca Capra <luca.capra@create-net.org>
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -37,7 +39,9 @@ adapter.initialize = function(compose) {
      */
     adapter.request = function(handler) {
 
-        var params = parseUrl(compose.config.url + handler.path);
+        var _url = handler.path.substr(0,4) === 'http' ? handler.path : compose.config.url + handler.path;
+
+        var params = parseUrl(_url);
         params.headers = {
             "Content-Type": "application/json",
             "Cache-Control": "no-cache",

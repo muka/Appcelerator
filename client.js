@@ -2,6 +2,8 @@
 Copyright 2014 CREATE-NET
 Developed for COMPOSE project (compose-project.eu)
 
+@author Luca Capra <luca.capra@create-net.org>
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -474,7 +476,16 @@ limitations under the License.
         RequestHandler.prototype.container = function(_c) {
             if(_c) {
                 this.__$container = _c;
-                this.emitter = _c.ServiceObject.emitter();
+
+                if(_c.parent && _c.parent.emitter) {
+                    this.emitter = _c.parent.emitter();
+                }
+                else if(_c.emitter) {
+                    this.emitter =  _c.emitter;
+                }
+                else {
+                    this.emitter =  new Emitter();
+                }
             }
             return this.__$container;
         };
@@ -560,7 +571,7 @@ limitations under the License.
                 return adapter;
             };
 
-            this.ServiceObject = so;
+            this.parent = so;
             this.queue = queueManager;
 
             this.requestHandler = new RequestHandler();
