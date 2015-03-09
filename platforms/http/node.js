@@ -44,9 +44,12 @@ adapter.initialize = function(compose) {
         var params = parseUrl(_url);
         params.headers = {
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
-            "Authorization": compose.config.apiKey
+            "Cache-Control": "no-cache"
         };
+
+        if(compose.config.apiKey) {
+            params["Authorization"] = compose.config.apiKey;
+        }
 
         params.method = handler.method;
 
