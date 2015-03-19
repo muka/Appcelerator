@@ -29,6 +29,9 @@ limitations under the License.
         var ValidationError = compose.error.ValidationError;
         var Emitter = compose.lib.Client.Emitter;
 
+        var getApi = function() {
+            return compose;
+        };
 
         /**
          *
@@ -42,6 +45,8 @@ limitations under the License.
         };
 
         Subscription.prototype.__$container;
+
+        Subscription.prototype.getApi = getApi;
 
         Subscription.prototype.container = function(o) {
             this.__$container = o || this.__$container;
@@ -151,6 +156,8 @@ limitations under the License.
         };
         compose.util.extend(SubscriptionList, compose.util.List.ArrayList);
 
+        SubscriptionList.prototype.getApi = getApi;
+
         SubscriptionList.prototype.validate = function(obj) {
             var sub = new Subscription(obj);
             sub.container(this.container());
@@ -185,6 +192,9 @@ limitations under the License.
         };
 
         Actuation.prototype.__$container;
+
+        Actuation.prototype.getApi = getApi;
+
         /**
          *
          * @param {Stream} Optional, a Stream object
@@ -259,7 +269,7 @@ limitations under the License.
             return new Promise(function(resolve, reject) {
 
                 if(!me.id) {
-                    throw new ComposeError("Actuation must have an id, have you invoked it first?");
+                    throw new ComposeError("Actuation must have an id, use invoke or refresh the list before continue");
                 }
 
                 var url = '/actuations/'+ me.id;
@@ -313,6 +323,8 @@ limitations under the License.
             return action;
         };
 
+        ActuationList.prototype.getApi = getApi;
+
         /**
          * Load all the ServiceObject actuations
          *
@@ -339,6 +351,8 @@ limitations under the License.
             this.__$container = null;
         };
         compose.util.extend(DataBag, compose.util.List.Enumerable);
+
+        DataBag.prototype.getApi = getApi;
 
         /**
          * @return {Stream} A reference to the source stream
@@ -432,6 +446,8 @@ limitations under the License.
 
         Stream.prototype.__$subscriptions;
         Stream.prototype.__$pubsub = null;
+
+        Stream.prototype.getApi = getApi;
 
         Stream.prototype.initialize = function(obj) {
 
@@ -1135,6 +1151,8 @@ limitations under the License.
         };
         compose.util.extend(StreamList, compose.lib.WebObject.StreamList);
 
+        StreamList.prototype.getApi = getApi;
+
         StreamList.prototype.validate = function(stream) {
 
             stream.description = stream.description || "";
@@ -1208,6 +1226,8 @@ limitations under the License.
         ServiceObject.prototype.emitter = function() {
             return this.__$emitter;
         };
+
+        ServiceObject.prototype.getApi = getApi;
 
         ServiceObject.prototype.getClient = function() {
             return new compose.lib.Client.Client(this);
@@ -1368,10 +1388,12 @@ limitations under the License.
                     throw new ComposeError("Missing ServiceObject id.");
                 }
                 me.getClient().get('/'+me.id, null, function(data) {
+
                     if(data) {
                         me.initialize(data);
                     }
                     resolve && resolve(me);
+
                 }, reject);
             }).bind(me);
         };

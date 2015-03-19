@@ -396,8 +396,13 @@ limitations under the License.
 
                 compose.config.debug = debug;
                 if(compose.config.debug) {
-                    if(!compose.config.platform.titanium)
-                        compose.lib.Promise && compose.lib.Promise.longStackTraces();
+                    if(!compose.config.platform.titanium) {
+                        try {
+                            compose.lib.Promise && compose.lib.Promise.longStackTraces();
+                        }catch(e){
+
+                        }
+                    }
                 }
 
             };
@@ -466,8 +471,8 @@ limitations under the License.
 
                         if(_config.transport) {
                              instance.config.transport = _config.transport;
-                            if(_config[config.transport]) {
-                                instance.config[config.transport] = _config[config.transport] || null;
+                            if(_config[_config.transport]) {
+                                instance.config[_config.transport] = _config[_config.transport] || null;
                             }
                         }
 
