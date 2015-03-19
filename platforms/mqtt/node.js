@@ -26,7 +26,6 @@ var d = function(m) { (DEBUG === true || (DEBUG > 19)) && console.log("[mqtt cli
 var mqtt = require("mqtt");
 var parseUrl = require("url").parse;
 
-
 var parseResponseContent = function(message) {
 
     var response = {
@@ -87,7 +86,7 @@ adapter.initialize = function(compose) {
     compose.config.mqtt = compose.config.mqtt || {};
     var mqttConf = {
         proto: compose.config.mqtt.secure ? 'mqtts' : 'mqtt',
-        host: host || "api.servioticy.com",
+        host: compose.config.mqtt.host || host || "api.servioticy.com",
         port: compose.config.mqtt.port || "1883",
         user: compose.config.mqtt.user || "compose",
         password: compose.config.mqtt.password || "shines"
@@ -121,7 +120,7 @@ adapter.initialize = function(compose) {
                     mqttConf.proto + "://" + mqttConf.user + ":" + mqttConf.password +
                     "@" + mqttConf.host + ":" + mqttConf.port);
 
-            client = mqtt.createClient(mqttConf.port, mqttConf.host, {
+            client = mqtt.connect(mqttConf.proto + "://" + mqttConf.host + ":" + mqttConf.port,  {
                 username: mqttConf.user,
                 password: mqttConf.password
             });
@@ -142,13 +141,19 @@ adapter.initialize = function(compose) {
 
             client.on('connect', function() {
 
+                d('Connected')
                 handler.emitter.trigger('connect', client);
 
-                client.subscribe(topics.to, function() {
+                client.subscribe(topics.to, function(err, granted) {
+
+                    err && handler.emitter.trigger('error', err);
+
                     d("Subscribed to " + topics.to);
+
                     client.on('message', function(topic, message, response) {
 
                         d("New message from topic " + topic);
+
                         if(topic === topics.to) {
                             var resp = parseResponseContent(message);
 //                            console.log("#### message!", topic, resp);
