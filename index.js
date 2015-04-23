@@ -521,7 +521,7 @@ limitations under the License.
 
                     instance.util.List = instance.util.setupModule("utils/List");
 
-                    instance.lib.Promise = instance.util.getPromiseLib();
+                    instance.Promise = instance.lib.Promise = instance.util.getPromiseLib();
 
                     if(!instance) {
                         throw new instance.error.ComposeError("compose.io module reference not provided, quitting..");

@@ -1,0 +1,6 @@
+{
+    "debug": false,
+    "apiKey": "*** apikey ***",
+    "url": "http://api.servioticy.com",
+    "transport": "http"
+}

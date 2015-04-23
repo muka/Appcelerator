@@ -457,8 +457,8 @@ limitations under the License.
 
             var subscriptions = new SubscriptionList(obj.subscriptions || {});
             subscriptions.container(this);
-            this.__$subscriptions = subscriptions;
 
+            this.__$subscriptions = subscriptions;
             this.__$emitter = new Emitter;
 
             return this;
@@ -529,7 +529,9 @@ limitations under the License.
                             topic: 'stream',
                             stream: me,
                             emitter: me.emitter(),
-                            onQueueData: function() {}
+                            onQueueData: function(response, message) {
+                                me.emitter().trigger('data', response.body, response, message);
+                            }
                         });
                     }
                     catch(e) {
@@ -538,7 +540,7 @@ limitations under the License.
                     }
 
                     if(fn && typeof fn === 'function') {
-                        me.on('data', fn);
+                        me.container().on('data', fn);
                     }
 
                     success(subscription);
@@ -546,12 +548,17 @@ limitations under the License.
             };
 
             return this.getSubscriptions().refresh().then(function() {
+
                 var subscription = me.getSubscription(me.__$pubsub.callback, "callback");
+
                 if(!subscription) {
+
                     subscription = me.addSubscription(me.__$pubsub);
+
                     return subscription.create().then(listener);
                 }
                 else {
+
                     return listener(subscription);
                 }
             });

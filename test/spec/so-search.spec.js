@@ -1,11 +1,13 @@
 describe('ServiceObject', function() {
 
+    var conf = require('../config.json')
+
     var composelib = require("../../index");
     composelib.setup({
-//        debug: true,
-        apiKey: "M2UxYTFmNzQtZDZhYi00ZTNiLWEzZWUtYzdjMTU1MzJhMDE1ZTdlYWRiYzQtMmU2ZS00YTk5LTgyNGQtZDU3YzkzOWQwYzQw",
-        url: "http://192.168.9.243:8080",
-        transport: 'http'
+        debug: conf.debug,
+        apiKey: conf.apiKey,
+        url: conf.url,
+        transport: conf.transport
     }).then(function(compose) {
 
         var smartphone = null;

@@ -34,6 +34,8 @@ var parseResponseContent = function(message) {
         body: {}
     };
 
+    message = message.toString();
+
     if(!message) {
         return response;
     }
@@ -104,7 +106,7 @@ adapter.initialize = function(compose) {
         to: compose.config.apiKey + '/to'
 
         , stream: function(handler) {
-            return "/topic/" + compose.config.apiKey + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
+            return compose.config.apiKey + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
         }
 
     };
@@ -153,10 +155,13 @@ adapter.initialize = function(compose) {
                     client.on('message', function(topic, message, response) {
 
                         d("New message from topic " + topic);
+//                        console.log(  "message \n\n ------------------------------------\n\n",
+//                            message.toString(),
+//                            "\n\n -----------------------------"
+//                        );
 
                         if(topic === topics.to) {
                             var resp = parseResponseContent(message);
-//                            console.log("#### message!", topic, resp);
                             queue.handleResponse(resp);
                         }
                     });
@@ -220,14 +225,24 @@ adapter.initialize = function(compose) {
 
         var uuid = queue.registerSubscription(topic, handler);
 
-        d("[stomp client] Listening to " + topic);
+        d("Listening to " + topic);
 
         client.on('message', function(srctopic, message, response) {
+
             if(topic === srctopic) {
-                d("[stomp client] New message from topic " + topic);
-                message.messageId = uuid;
-                queue.handleResponse(message);
+
+
+
+                d("New message from topic " + topic);
+
+                var resp = {
+                    body: message.toString(),
+                    messageId: uuid
+                };
+
+                queue.handleResponse(resp);
             }
+
         });
 
         client.subscribe(topic, function() {

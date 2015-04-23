@@ -211,14 +211,11 @@ limitations under the License.
             this.registry[topic] = this.registry[topic] || [];
             var l = this.registry[topic].length;
 
-            var args = (function() {
-                var _a = [];
-                for(var i in arguments) {
-                    if(i === 0) continue;
-                    _a.push(arguments[i]);
-                }
-               return  _a;
-            })();
+            var args = [];
+            for(var i in arguments) {
+                if(i === 0) continue;
+                args.push(arguments[i]);
+            }
 
             for(var i = 0; i < l; i++) {
                 var emitter = this.registry[topic][i].emitter();
@@ -372,25 +369,30 @@ limitations under the License.
                     message.body = JSON.parse(message.body);
                 }
 
-                if(message.body && typeof message.body.messageId !== 'undefined') {
-                    message.messageId = message.body.messageId;
-                    delete message.body.messageId;
-                }
+                if(message.body) {
 
-                if(message.body.meta && typeof message.body.meta.messageId !== 'undefined') {
-                    message.messageId = message.body.meta.messageId;
-                    message.body = message.body.body;
+                    if(typeof message.body.messageId !== 'undefined') {
+                        message.messageId = message.body.messageId;
+                        delete message.body.messageId;
+                    }
+
+                    if(message.body.meta && typeof message.body.meta.messageId !== 'undefined') {
+                        message.messageId = message.body.meta.messageId;
+                        message.body = message.body.body;
+                    }
                 }
 
                 if(message.headers && typeof message.headers.messageId !== 'undefined') {
                     message.messageId = message.headers.messageId;
                 }
 
+
             };
 
             this.handleResponse = function(message, raw) {
 
                 var response;
+
                 if(typeof message === 'object') {
                     response = message;
                 }
@@ -426,7 +428,8 @@ limitations under the License.
                             handler.emitter.trigger('error', response.body);
                         }
                         else {
-                            //a callback is provided to handle the dispatch the event
+
+                            //a callback is provided to handle the dispatch of the event
                             if(handler.onQueueData && typeof handler.onQueueData === 'function') {
                                 handler.onQueueData.call(handler, response, message);
                             }
@@ -445,8 +448,10 @@ limitations under the License.
                 }
 
                 d("[queue manager] Message not found, id " + ((response.messageId) ? response.messageId : '[not set]'));
-//                this.triggerAll('data', response, message);
-                this.receiver() && this.receiver().notify('data', response, message);
+
+                if(this.receiver()) {
+                    this.receiver().notify('data', response, message);
+                }
 
                 return false;
             };

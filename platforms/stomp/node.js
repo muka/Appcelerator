@@ -81,7 +81,7 @@ adapter.initialize = function(compose) {
     compose.config.stomp = compose.config.stomp || {};
     var stompConf = {
         proto: compose.config.stomp.secure ? 'wss' : 'ws',
-        host: host || "api.servioticy.com",
+        host: compose.config.stomp.host || host || "api.servioticy.com",
         port: compose.config.stomp.port || "61623",
         user: compose.config.stomp.user || "compose",
         password: compose.config.stomp.password || "shines"
@@ -126,9 +126,9 @@ adapter.initialize = function(compose) {
 
                     handler.emitter.trigger('connect', client);
 
-                    d("[stomp client] Subscribe to " + topics.to);
+                    d("Subscribe to " + topics.to);
                     client.subscribe(topics.to, function(message) {
-                        d("[stomp client] New message from topic " + topics.to);
+                        d("New message from main topic " + topics.to);
                         queue.handleResponse(message);
                     });
 
@@ -182,7 +182,7 @@ adapter.initialize = function(compose) {
 //            priority: 1
         };
 
-        d("[stomp client] Sending message..");
+        d("Sending message..");
         client.send(topics.from, ropts, JSON.stringify(request));
 
     };
@@ -199,9 +199,9 @@ adapter.initialize = function(compose) {
 
         var uuid = queue.registerSubscription(topic, handler);
 
-        d("[stomp client] Listening to " + topic);
+        d("Listening to " + topic);
         client.subscribe(topic, function(message) {
-            d("[stomp client] New message from topic " + topic);
+            d("New message from topic " + topic);
             message.messageId = uuid;
             queue.handleResponse(message);
         });

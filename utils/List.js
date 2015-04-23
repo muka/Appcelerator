@@ -39,7 +39,7 @@ limitations under the License.
         /**
          * @returns {mixed} A list of values
          * */
-        Enumerable.prototype.getList = function() {
+        Enumerable.prototype.getList = Enumerable.prototype.toArray = function() {
             return this.__$list;
         };
 
