@@ -10,13 +10,13 @@ describe('ServiceObject', function() {
         apiKey: conf.apiKey,
         url: conf.url,
         transport: conf.transport
-    }).then(function(compose){
+    }).then(function(api){
 
         var smartphone = null;
         var smartphoneDefinition = require('./smartphone.so').definition;
 
         it('Create SO', function(done) {
-            compose.create(smartphoneDefinition)
+            api.create(smartphoneDefinition)
                 .then(function(so) {
                     expect((so.id)).toBeTruthy();
                     smartphone = so;
@@ -26,7 +26,7 @@ describe('ServiceObject', function() {
         });
 
         it('List SO', function(done) {
-            compose.list()
+            api.list()
                 .then(function(list) {
                     expect(list.length > 0).toBeTruthy();
                 })
@@ -35,7 +35,7 @@ describe('ServiceObject', function() {
         });
 
         it('Load SO', function(done) {
-            compose.load(smartphone.id)
+            api.load(smartphone.id)
                 .then(function(so) {
                     expect(so.id).toEqual(smartphone.id);
                 })

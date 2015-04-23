@@ -9,10 +9,10 @@ exports.definition = {
             "type": "sensor",
             "channels": {
                 "latitude": {
-                    "type": "String"
+                    "type": "string"
                 },
                 "longitude": {
-                    "type": "String"
+                    "type": "string"
                 }
             }
         },
@@ -20,13 +20,13 @@ exports.definition = {
             type: "sensor",
             channels: {
                 "testnumeric": {
-                    type: "Number"
+                    type: "number"
                 },
                 "testtext": {
-                    type: "String"
+                    type: "string"
                 },
-                "location": {
-                    type: "String"
+                "testlocation": {
+                    type: "string"
                 }
             }
         }

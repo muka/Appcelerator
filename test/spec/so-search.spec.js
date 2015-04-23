@@ -8,7 +8,7 @@ describe('ServiceObject', function() {
         apiKey: conf.apiKey,
         url: conf.url,
         transport: conf.transport
-    }).then(function(compose) {
+    }).then(function(api) {
 
         var smartphone = null;
         var smartphoneDefinition = require('./smartphone.so').definition;
@@ -16,7 +16,7 @@ describe('ServiceObject', function() {
         var pushData = [
             {
                 testnumeric: 110,
-                testtext: "abba rolling stones pink floid",
+                testtext: "abba rolling stones pink floyd",
                 location: [15, 55]
             },
             {
@@ -26,12 +26,12 @@ describe('ServiceObject', function() {
             },
             {
                 testnumeric: 140,
-                testtext: "bieber minogue pink floid",
+                testtext: "bieber minogue pink floyd",
                 location: [25, 65]
             },
             {
                 testnumeric: 160,
-                testtext: "dire straits pink floid",
+                testtext: "dire straits pink floyd",
                 location: [30, 70]
             }
         ];
@@ -39,7 +39,7 @@ describe('ServiceObject', function() {
 
         it('Search by Bounding Box', function(done) {
 
-            compose.create(smartphoneDefinition)
+            api.create(smartphoneDefinition)
                 .then(function(so) {
 
                     smartphone = so;
@@ -80,7 +80,7 @@ describe('ServiceObject', function() {
         it('Search by Text', function(done) {
 
             smartphone.getStream('test')
-                .searchByText("testtext", "pink floid")
+                .searchByText("testtext", "pink floyd")
                 .then(function(res) {
                     expect(res.size()).toEqual(3);
                 })

@@ -370,6 +370,21 @@ limitations under the License.
         };
 
         /**
+         * Return the data as a simple JSON list
+         * */
+        DataBag.prototype.toJson = function() {
+            var list = [];
+            while(this.next()) {
+                // current return the data stored at the position of the internal cursor
+                var value = this.current();
+                if(value) {
+                    list.push(value.asObject());
+                }
+            }
+            return list;
+        };
+
+        /**
          * Return an object in the list. If index is not provided, the current cursor position will be used
          *
          * @param {Number} index Optional, index in the list

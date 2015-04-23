@@ -2,9 +2,9 @@
 describe('WebObject', function() {
 
     composelib = require('../../index');
-    composelib.setup("dummy").then(function(compose) {
+    composelib.setup("dummy").then(function(api) {
 
-        var wo = compose.WebObject;
+        var wo = api.WebObject;
 
         var smartphoneDefinition = require('./smartphone').definition;
         var smartphoneWo;
