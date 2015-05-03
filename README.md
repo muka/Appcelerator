@@ -82,7 +82,7 @@ The library will self-load all its dependencies on `setup` call (see later)
 console.log(window.Compose);
 ```
 
-If you wish to use the library in an AMD-enable setup (like with [require.js](http://requirejs.org/)) some configuration are required in order to load the correct resources.
+For an AMD-enabled setup (like with [require.js](http://requirejs.org/))
 
 ```
 require.config({
@@ -90,10 +90,14 @@ require.config({
         "compose.io": "compose.io/build/browser/compose",
     }
 });
-```
-Once done, just request the module
 
-`var Compose = require('compose.io')`
+require(['compose.io'], function(Compose) {
+    var api = new Compose('<apiKey');
+});
+
+```
+
+
 
 The library is also configured to be used with `browserify` to support UMD node-like `require`. To generate the whole library as a bundle use eg.
 
