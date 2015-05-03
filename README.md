@@ -630,9 +630,14 @@ API docs needs review. Can be generated using `jsdoc` and will be added to the r
 
 #Changelog
 
+**v0.5.2**
+
+- Added titanium build
+
 **v0.5.0**
 
 - Added build tool for browser
+- removed method `Compose.setup` in favour of `new Compose`
 
 **v0.4.1**
 
