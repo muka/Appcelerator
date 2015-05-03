@@ -55,9 +55,9 @@ Extract the archive to `<project>/modules` and add to your `tiapp.xml` the modul
 </modules>
 ```
 
-Add the `compose.io` javascript library inside the `Resources` folder (or `app/lib` if you use Alloy) in your project, then in the code
+Add `build/titanium/compose` library inside the `Resources` folder (or `app/lib` if you use Alloy) in your project, then in the code
 
-`var compose = require('compose.io/index')`
+`var compose = require('compose')`
 
 ##Node.js
 
@@ -72,15 +72,11 @@ and then import it in your code
 
 ##Browser
 
-You can link to the `index.js` script inside your page
+Add dependency to your page
 
 `<script src="js/compose.io/build/browser/compose.js"></script>`
 
-The library will self-load all its dependencies on `setup` call (see later)
-
-```
-console.log(window.Compose);
-```
+` console.log(window.Compose); `
 
 For an AMD-enabled setup (like with [require.js](http://requirejs.org/))
 
@@ -92,7 +88,7 @@ require.config({
 });
 
 require(['compose.io'], function(Compose) {
-    var api = new Compose('<apiKey');
+    var api = new Compose('<apiKey>');
 });
 
 ```
