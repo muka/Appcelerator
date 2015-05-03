@@ -18,76 +18,51 @@ limitations under the License.
 ******************************************************************************/
 
 
-(function() {
+var DEBUG = false;
+var d = function(m) { DEBUG && console.log(m); };
 
-    var DEBUG = false;
-    var d = function(m) { DEBUG && console.log(m); };
+var httplib = module.exports;
+httplib.initialize = function(compose) {
 
-    var httplib = {};
+    DEBUG = compose.config.debug;
 
-    httplib.initialize = function(compose) {
-
-        DEBUG = compose.config.debug;
-
-        httplib.connect = function(handler, success, failure) {
-            success();
-        };
-        httplib.disconnect = function() {};
-
-        httplib.request = function(handler) {
-
-            var http = new XMLHttpRequest();
-            var url = compose.config.url + handler.path;
-
-            d(handler.method + ' ' + url);
-
-            http.onreadystatechange = function () {
-                if (http.readyState !== 4) {
-                    return;
-                }
-                if (http.status >= 400) {
-                    handler.emitter.trigger('error', {
-                        code: http.status
-                    });
-                }
-                else {
-                    var json = JSON.parse(http.responseText);
-                    handler.emitter.trigger('success', json);
-                }
-            };
-
-            http.open(handler.method, url, true);
-            http.setRequestHeader("Content-type", "application/json");
-            http.setRequestHeader("Authorization", compose.config.apiKey);
-
-            var data = null;
-            if(handler.body) {
-                data = JSON.stringify(handler.body);
-            }
-
-            http.send(data);
-        };
-
+    httplib.connect = function(handler, success, failure) {
+        success();
     };
+    httplib.disconnect = function() {};
 
-    //-- multiplatform support
-    (function(libname, lib, deps) {
-        deps = (deps instanceof Array) ? deps : ['compose'];
-        if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-            module.exports = lib;
-        }
-        else {
+    httplib.request = function(handler) {
 
-            if (typeof define === 'function' && define.amd) {
-                define(deps, function(compose) {
-                    return lib;
+        var http = new XMLHttpRequest();
+        var url = compose.config.url + handler.path;
+
+        d(handler.method + ' ' + url);
+
+        http.onreadystatechange = function () {
+            if (http.readyState !== 4) {
+                return;
+            }
+            if (http.status >= 400) {
+                handler.emitter.trigger('error', {
+                    code: http.status
                 });
             }
-            if(typeof window !== 'undefined') {
-                window.__$$composeioRegistry[libname] = lib;
+            else {
+                var json = JSON.parse(http.responseText);
+                handler.emitter.trigger('success', json);
             }
-        }
-    })
-    ('platforms/http/browser', httplib);
+        };
 
-})();
+        http.open(handler.method, url, true);
+        http.setRequestHeader("Content-type", "application/json");
+        http.setRequestHeader("Authorization", compose.config.apiKey);
+
+        var data = null;
+        if(handler.body) {
+            data = JSON.stringify(handler.body);
+        }
+
+        http.send(data);
+    };
+
+};

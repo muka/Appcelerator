@@ -17,26 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ******************************************************************************/
 
-(function() {
-
-    var stomplib = {};
-
-    stomplib.initialize = function(compose) {
-        throw new compose.error.ComposeError("Titanium support for stomp-over-ws has not been implemented yet. Please use mqtt instead");
-    };
-
-//    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-//        module.exports = stomplib;
-//    }
-//    else {
-//        if (typeof define === 'function' && define.amd) {
-//            define(['compose'], function(compose) {
-//                return stomplib;
-//            });
-//        }
-//        else {
-//            window.__$$Compose.platforms_stomp_browser = stomplib;
-//        }
-//    }
-
-})();
+var stomplib = module.exports;
+stomplib.initialize = function(compose) {
+    throw new compose.error.ComposeError("Titanium support for stomp-over-ws has not been implemented yet. Please use mqtt instead");
+};

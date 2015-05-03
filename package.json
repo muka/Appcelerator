@@ -28,7 +28,8 @@
         "stompjs": "*"
     },
     "devDependencies": {
-        "jasmine-node": "*"
+        "jasmine-node": "*",
+        "underscore": "*"
     },
     "browserify": {
     },

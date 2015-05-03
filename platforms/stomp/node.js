@@ -137,7 +137,6 @@ adapter.initialize = function(compose) {
 
                 },
                 function(e) { // error
-
                     connectionFail(e);
                     handler.emitter.trigger('error', e);
                 }

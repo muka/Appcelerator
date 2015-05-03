@@ -17,32 +17,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ******************************************************************************/
 
-(function() {
+var mqttlib = module.exports;
 
-    var mqttlib = {};
-
-    mqttlib.initialize = function(compose) {
-        throw new compose.error.ComposeError("Browser support for mqtt has not been implemented yet! Please, use stomp instead");
-    };
-
-    //-- multiplatform support
-    (function(libname, lib, deps) {
-        deps = (deps instanceof Array) ? deps : ['compose'];
-        if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-            module.exports = lib;
-        }
-        else {
-
-            if (typeof define === 'function' && define.amd) {
-                define(deps, function(compose) {
-                    return lib;
-                });
-            }
-            if(typeof window !== 'undefined') {
-                window.__$$composeioRegistry[libname] = lib;
-            }
-        }
-    })
-    ('platforms/mqtt/browser', mqttlib);
-
-})();
+mqttlib.initialize = function(compose) {
+    throw new compose.error.ComposeError("Browser support for mqtt has not been implemented yet! Please, use stomp instead");
+};

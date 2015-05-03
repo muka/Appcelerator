@@ -17,98 +17,75 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ******************************************************************************/
 
-(function() {
+var readDefinition = {
+    titanium: function(filename, compose, success, failure) {
 
-    var readDefinition = {
-        titanium: function(filename, compose, success, failure) {
+        var readf = function(filepath) {
 
-            var readf = function(filepath) {
+            var readFile = Titanium.Filesystem.getFile(filepath);
+            if (readFile.exists()) {
 
-                var readFile = Titanium.Filesystem.getFile(filepath);
-                if (readFile.exists()) {
+                var readContents = readFile.read();
+                var data = readContents.text;
 
-                    var readContents = readFile.read();
-                    var data = readContents.text;
+                return JSON.parse(data);
+            }
+            return false;
+        };
 
-                    return JSON.parse(data);
-                }
-                return false;
-            };
+        var basePath = Titanium.Filesystem.getResourcesDirectory() + Titanium.Platform.osname + "/";
+        var filepath = basePath + compose.util.getDefinitionsPath() + filename + ".json";
 
-            var basePath = Titanium.Filesystem.getResourcesDirectory() + Titanium.Platform.osname + "/";
-            var filepath = basePath + compose.util.getDefinitionsPath() + filename + ".json";
-
-            var data = readf(filepath);
+        var data = readf(filepath);
 //            Ti.API.log(JSON.stringify(data));
+        if(data) {
+            success(data);
+            return;
+        }
+        else {
+            basePath = Titanium.Filesystem.getResourcesDirectory() + "/";
+            filepath = basePath + compose.util.getDefinitionsPath() + filename + ".json";
+            var data = readf(filepath);
             if(data) {
                 success(data);
                 return;
             }
-            else {
-                basePath = Titanium.Filesystem.getResourcesDirectory() + "/";
-                filepath = basePath + compose.util.getDefinitionsPath() + filename + ".json";
-                var data = readf(filepath);
-                if(data) {
-                    success(data);
-                    return;
-                }
+        }
+
+        failure(new Error("Errore reading definition"));
+    },
+    node: function(filename, compose, success, failure) {
+
+        var path = compose.util.getDefinitionsPath() + filename + ".json";
+        var buffer = require('fs').readFile(path, function(err, data) {
+            if(err) {
+                failure(err);
+                return;
             }
 
-            failure(new Error("Errore reading definition"));
-        },
-        node: function(filename, compose, success, failure) {
+            // Both of the following variables are scoped to the callback of fs.readFile
+            var data = data.toString();
+            success(JSON.parse(data));
+        });
+    },
+    browser: function(filename, compose, success, failure) {
+        failure(new Error("Not implementend yet!"));
+    }
+};
 
-            var path = compose.util.getDefinitionsPath() + filename + ".json";
-            var buffer = require('fs').readFile(path, function(err, data) {
-                if(err) {
-                    failure(err);
-                    return;
-                }
+var reader = module.exports;
+reader.setup = function(compose) {
 
-                // Both of the following variables are scoped to the callback of fs.readFile
-                var data = data.toString();
-                success(JSON.parse(data));
-            });
-        },
-        browser: function(filename, compose, success, failure) {
-            failure(new Error("Not implementend yet!"));
-        }
+    if (!readDefinition[compose.config.platform.name]) {
+        throw new Error("Platform not supported");
+    }
+
+    reader.read = function(file) {
+        return new compose.lib.Promise(function(success, failure) {
+            readDefinition[compose.config.platform.name](file, compose, success, failure);
+        });
+
     };
+};
 
-    var reader = {};
-    reader.setup = function(compose) {
-
-        if (!readDefinition[compose.config.platform.name]) {
-            throw new Error("Platform not supported");
-        }
-
-        reader.read = function(file) {
-            return new compose.lib.Promise(function(success, failure) {
-                readDefinition[compose.config.platform.name](file, compose, success, failure);
-            });
-
-        };
-    };
-
-    //-- multiplatform support
-    (function(libname, lib, deps) {
-        deps = (deps instanceof Array) ? deps : ['compose'];
-        if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-            module.exports = lib;
-        }
-        else {
-
-            if (typeof define === 'function' && define.amd) {
-                define(deps, function(compose) {
-                    return lib;
-                });
-            }
-            if(typeof window !== 'undefined') {
-                window.__$$composeioRegistry[libname] = lib;
-            }
-        }
-    })
-    ('Reader', reader, ['compose']);
-
-})();
 
