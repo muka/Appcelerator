@@ -24,6 +24,12 @@ var Compose = function(config) {
     
     config = config || {};
     
+    if(typeof config === 'string') {
+        config = {
+            apiKey: config
+        };
+    }
+    
     var compose = this;
 
     var DEBUG = false;
@@ -47,7 +53,7 @@ var Compose = function(config) {
         m.setup(compose);
         return m;
     };
-    
+
     /**
      *  Extends an object by (shallow) copying its prototype and expose a
      *  `__$parent` property to Child to get access to parent

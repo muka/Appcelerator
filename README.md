@@ -67,47 +67,33 @@ Install the module from the git repository
 
 and then import it in your code
 
-`var compose = require('compose.io')`
+`var Compose = require('compose.io')`
 
 
 ##Browser
 
 You can link to the `index.js` script inside your page
 
-`<script src="js/compose.io/index.js"></script>`
+`<script src="js/compose.io/build/browser/compose.js"></script>`
 
 The library will self-load all its dependencies on `setup` call (see later)
 
 ```
-console.log(window.compose || window.Compose);
+console.log(window.Compose);
 ```
 
 If you wish to use the library in an AMD-enable setup (like with [require.js](http://requirejs.org/)) some configuration are required in order to load the correct resources.
 
-(This will be better handled in future releases)
-
 ```
 require.config({
     paths: {
-
-        "compose.io": 'compose.io/index',
-        "utils/List": 'compose.io/utils/List',
-        "bluebird": 'compose.io/vendors/bluebird/browser/bluebird',
-        "stompjs": 'compose.io/vendors/stompjs/stomp.min',
-        "client": 'compose.io/client',
-        "WebObject": 'compose.io/WebObject',
-        "ServiceObject": 'compose.io/ServiceObject',
-
-        "platforms/stomp/browser": "compose.io/platforms/stomp/browser",
-        "platforms/http/browser": "compose.io/platforms/http/browser"
-        "platforms/mqtt/browser": "compose.io/platforms/mqtt/browser",
-
+        "compose.io": "compose.io/build/browser/compose",
     }
 });
 ```
 Once done, just request the module
 
-`var compose = require('compose.io')`
+`var Compose = require('compose.io')`
 
 The library is also configured to be used with `browserify` to support UMD node-like `require`. To generate the whole library as a bundle use eg.
 
@@ -117,23 +103,19 @@ The library is also configured to be used with `browserify` to support UMD node-
 
 The minimal configuration required is the apiKey to access the API.
 
-Please refer to the [Online demo](http://www.servioticy.com/?page_id=73) section on servioticy.com to request your api key.
-
-**Note** From `v0.4.0` a call to `compose.setup` will return a promise, introducing a breaking change. Please upgrade your code accordingly!
+Please refer to the [online demo](http://www.servioticy.com/?page_id=73) section on servioticy.com to request your api key.
 
 ```
-compose.setup('your api key 1').then(function(api1) {
-    // api1 is the instance of your first api key
-});
+var api1 = new Compose('your api key 1');
 
 // load another apiKey
-compose.setup('other api key').then(function(api2) { /* another api key  */ });
+var api2 = new Compose('your api key 2');
 ```
 
 Details of available options:
 
 ```
-compose.setup({
+var api = new Compose({
 
     // api key
     apiKey: '<api key>',
@@ -649,6 +631,10 @@ API docs needs review. Can be generated using `jsdoc` and will be added to the r
 `jsdoc ./`
 
 #Changelog
+
+**v0.5.0**
+
+- Added build tool for browser
 
 **v0.4.1**
 

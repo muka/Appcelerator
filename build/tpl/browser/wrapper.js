@@ -6,19 +6,15 @@ var $$Compose = (function() {
 }).call(window);
 
 if (typeof define === 'function' && define.amd) {
-
-    // Taint DOM in case define/require are not compatible
-    // (as for external browserify-ed modules)
-    compose.ready = compose.util.loadDeps;
-    window.compose = window.compose || compose;
-
-    if(window.compose !== compose)
-        window.Compose = compose;
-
-    define('compose.io', function() { return $$Compose; });
+    define(function() { return $$Compose; });
 }
 else {
     if(typeof window.require === 'undefined') {
+        
+        if(window.Compose) {
+            window.Compose_conflicting = window.Compose;
+        }
+        
         window.Compose = $$Compose;
     };
 }
