@@ -291,8 +291,8 @@ var Compose = function(config) {
         
 };
 
-Compose.prototype.require = function() {
-    return require;
+Compose.prototype.require = function(m) {
+    return require(m);
 };
 
 module.exports = Compose;

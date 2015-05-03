@@ -97,8 +97,6 @@ require(['compose.io'], function(Compose) {
 
 ```
 
-
-
 The library is also configured to be used with `browserify` to support UMD node-like `require`. To generate the whole library as a bundle use eg.
 
 `browserify index.js > compose-bundle.js`
