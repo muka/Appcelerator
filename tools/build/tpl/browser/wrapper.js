@@ -1,9 +1,11 @@
 (function(self) {
 
-    var $$Compose = function() {    <%= content %>    };
-
+    var $$Compose = (function() { <%= content %> }).call(self);
     if (typeof define === 'function' && define.amd) {
-        define(function() { return $$Compose.call(self); });
+        define(function(require, exports, module) {
+            exports = $$Compose;
+            return $$Compose;
+        });
     }
     else {
         if(typeof window.require === 'undefined') {
@@ -12,7 +14,7 @@
                 window.Compose_conflicting = window.Compose;
             }
 
-            window.Compose = $$Compose.call(self);
+            window.Compose = $$Compose;
         };
     }
 
