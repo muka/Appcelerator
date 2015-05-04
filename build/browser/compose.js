@@ -1,7 +1,6 @@
+(function(self) {
 
-var $$Compose = (function() {
-    
-var exports = {}; 
+    var $$Compose = function() {    var exports = {}; 
 var module = { exports: exports };
 
 /*******************************************************************************
@@ -27,33 +26,33 @@ limitations under the License.
 var _longStackTraces = false;
 
 var Compose = function(config) {
-    
+
     config = config || {};
-    
+
     if(typeof config === 'string') {
         config = {
             apiKey: config
         };
     }
-    
+
     var compose = this;
 
     var DEBUG = false;
     var d = function(m) { (DEBUG === true || DEBUG > 5) && console.log(m); };
-    
-    var registerUrl = "http://www.servioticy.com/?page_id=73";    
-    
+
+    var registerUrl = "http://www.servioticy.com/?page_id=73";
+
     compose.util = {};
     compose.lib = {};
     compose.modules = {};
     // custom errors
     compose.error = {};
-    
+
     compose.util.require = function(n) {
         compose.modules[n] = compose.require(n);
         return compose.modules[n];
     };
-    
+
     compose.util.module = function(n) {
         var m = compose.util.require(n);
         m.setup(compose);
@@ -79,7 +78,7 @@ var Compose = function(config) {
         c.__$parent = p;
         c.parent = function() { return c.__$parent; };
     };
-    
+
     compose.util.loadAdapter = function() {
         return compose.util.require('./platforms/' + compose.config.transport + '/' + compose.config.platform.name);
     };
@@ -130,11 +129,11 @@ var Compose = function(config) {
 
         var gettype = function(t) { return (t instanceof Array) ? [] : {}; };
         var dst = compose.util.copyVal(orig);
-        
+
         for (var i in src) {
 
             var v = src[i];
-            
+
             if (v instanceof Array || typeof v === 'object') {
                 dst[i] = compose.util.merge(v);
                 continue;
@@ -144,8 +143,8 @@ var Compose = function(config) {
         }
 
         return dst;
-    };    
-    
+    };
+
     compose.config = {
         url: 'http://api.servioticy.com',
         apiKey: null,
@@ -215,8 +214,8 @@ var Compose = function(config) {
         }
         d("selected transport is " + compose.config.transport);
     };
-    selectPreferredTransport();    
-    
+    selectPreferredTransport();
+
     compose.error.ComposeError = function() {
         this.name = "ComposeError";
         this.mapArgs(arguments);
@@ -250,9 +249,9 @@ var Compose = function(config) {
         throw new compose.error.ComposeError("An apiKey is required to use the platform, please visit " +
                 registerUrl + " for further instructions");
     }
-    
+
     var supportedTransports = ['mqtt', 'stomp', 'http'];
-    
+
     if(compose.config.platform.titanium) {
         supportedTransports = ['mqtt', 'http'];
     }
@@ -260,9 +259,9 @@ var Compose = function(config) {
     if(compose.config.platform.browser) {
         supportedTransports = ['stomp', 'http'];
     }
-    
+
     if(supportedTransports.indexOf(compose.config.transport) < 0) {
-        throw new compose.error.ComposeError("Transport " + compose.config.transport 
+        throw new compose.error.ComposeError("Transport " + compose.config.transport
                 + " is not supported in " + compose.config.platform.name);
     }
 
@@ -288,13 +287,18 @@ var Compose = function(config) {
     compose.delete = compose.lib.ServiceObject.delete;
     compose.create = compose.lib.ServiceObject.create;
     compose.list = compose.lib.ServiceObject.list;
-    
+
     if(compose.config.debug) {
         if(!_longStackTraces && !compose.config.platform.titanium) {
             compose.lib.Promise.longStackTraces();
         }
     }
-        
+
+    // keep consistent with previous version
+    compose.setup = function(_config) {
+        return compose.lib.Promise.resolve(new compose(_config));
+    };
+
 };
 
 Compose.prototype.require = function(m) {
@@ -9085,20 +9089,20 @@ return module && module.exports && Object.keys(module.exports).length
     return modules[m]();
 };
 
-return Compose;
+return Compose;    };
+
+    if (typeof define === 'function' && define.amd) {
+        define(function() { return $$Compose.call(self); });
+    }
+    else {
+        if(typeof window.require === 'undefined') {
+
+            if(window.Compose) {
+                window.Compose_conflicting = window.Compose;
+            }
+
+            window.Compose = $$Compose.call(self);
+        };
+    }
 
 }).call(window);
-
-if (typeof define === 'function' && define.amd) {
-    define(function() { return $$Compose; });
-}
-else {
-    if(typeof window.require === 'undefined') {
-        
-        if(window.Compose) {
-            window.Compose_conflicting = window.Compose;
-        }
-        
-        window.Compose = $$Compose;
-    };
-}
