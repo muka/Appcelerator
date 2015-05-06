@@ -594,6 +594,10 @@ drone.getActions().listen(function(id, params, raw) {
 
 }) // .then().catch().finally()
 
+// or
+// drone.on('actions', function(id, params, raw) {  });
+
+
 ```
 
 #Additional notes
@@ -626,14 +630,13 @@ Current status of the library follows the [Servioticy docs](http://docs.servioti
 
 *Subscriptions*
 
-* partially tested, implemented
-* http subscription
+* tested, implemented
+* http subscription [unsupported]
 * pubsub subscriptions (per stream)
 
 *Actuations*
 
-* untested, implemented
-
+* tested, mostly implemented (need status api impl)
 
 #Tests
 
