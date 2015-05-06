@@ -39,7 +39,7 @@ var parseResponseContent = function(message) {
     }
 
     // parts 0 is header, 1 is body
-    var parts = message.split("\n\n");
+    var parts = message.toString().split("\n\n");
 
     var headerparts = parts[0].split("\n");
 
@@ -92,19 +92,29 @@ adapter.initialize = function(compose) {
         password: compose.config.mqtt.password || "shines"
     };
 
+
+    var topicKey = compose.config.apiKeyToken;
+
     var request = {
         meta: {
-            authorization: compose.config.apiKey
+            authorization: topicKey
         },
         body: {}
     };
 
     var topics = {
-        from: compose.config.apiKey + '/from',
-        to: compose.config.apiKey + '/to'
+        from: topicKey + '/from',
+        to: topicKey + '/to'
 
         , stream: function(handler) {
-            return "/topic/" + compose.config.apiKey + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
+
+            var _key = handler.subscription.destination || topicKey;
+
+//            var streamTopic = "/topic/" + _key + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
+            var streamTopic = _key + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
+
+            d("Stream topic " + streamTopic);
+            return streamTopic;
         }
 
     };
@@ -152,11 +162,9 @@ adapter.initialize = function(compose) {
 
                     client.on('message', function(topic, message, response) {
 
-                        d("New message from topic " + topic);
-
                         if(topic === topics.to) {
+                            d("New message for topic.to");
                             var resp = parseResponseContent(message);
-//                            console.log("#### message!", topic, resp);
                             queue.handleResponse(resp);
                         }
                     });
@@ -220,13 +228,21 @@ adapter.initialize = function(compose) {
 
         var uuid = queue.registerSubscription(topic, handler);
 
-        d("[stomp client] Listening to " + topic);
+        d("Listening to " + topic);
 
         client.on('message', function(srctopic, message, response) {
             if(topic === srctopic) {
-                d("[stomp client] New message from topic " + topic);
-                message.messageId = uuid;
-                queue.handleResponse(message);
+
+                d("New message from subscription topic");
+
+                var obj = {
+                    meta: {
+                        messageId: uuid
+                    },
+                    body: JSON.parse(message.toString())
+                };
+
+                queue.handleResponse(obj);
             }
         });
 

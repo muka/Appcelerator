@@ -60,7 +60,7 @@ adapter.initialize = function(compose) {
 
     var Stomp = compose.require("stompjs");
     Stomp = typeof Stomp === 'function' ? Stomp : window.Stomp;
-    
+
     DEBUG = compose.config.debug;
 
     var queue = this.queue;
@@ -70,6 +70,8 @@ adapter.initialize = function(compose) {
         var urlinfo = parseUrl(compose.config.url);
         host = urlinfo.hostname;
     }
+
+    var ApiTokenKey = compose.config.apiKeyToken;
 
     compose.config.stomp = compose.config.stomp || {};
     var stompConf = {
@@ -83,11 +85,11 @@ adapter.initialize = function(compose) {
     stompConf.path = stompConf.path.length && stompConf.path.substr(0,1) !== '/' ? '/' + stompConf.path  : stompConf.path ;
 
     var topics = {
-        from: "/topic/" + compose.config.apiKey + '.from',
-        to: "/topic/" + compose.config.apiKey + '.to'
+        from: "/topic/" + ApiTokenKey + '.from',
+        to: "/topic/" + ApiTokenKey + '.to'
 
         , stream: function(handler) {
-            return "/topic/" + compose.config.apiKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+            return "/topic/" + ApiTokenKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
         }
     };
 

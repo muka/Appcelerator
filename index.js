@@ -151,10 +151,7 @@ var Compose = function(config) {
     DEBUG = config.debug;
 
     d("Configuration:");
-    d("---------------");
     d(compose.config);
-    d("---------------");
-
 
     /**
      * Sniff the current enviroment
@@ -261,7 +258,7 @@ var Compose = function(config) {
     }
 
 
-
+    compose.config.apiKeyToken = compose.config.apiKey.replace('Bearer ', '');
 
     compose.lib.Promise = compose.util.require('bluebird');
     compose.lib.DefinitionReader = compose.util.module('./utils/DefinitionReader');

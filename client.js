@@ -17,14 +17,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ******************************************************************************/
 
-var DEBUG = false;
-
-var d = function(m) {
-    (DEBUG === true || DEBUG > 20) && console.log(m);
-};
-
 var client = module.exports;
 client.setup = function(compose) {
+
+    var DEBUG = false;
+
+    var d = function(m) {
+        (DEBUG === true || DEBUG > 20) && console.log(m);
+    };
 
     var ComposeError = compose.error.ComposeError;
     var guid = function() {
@@ -375,9 +375,14 @@ client.setup = function(compose) {
                 delete message.body.messageId;
             }
 
+
             if(message.body.meta && typeof message.body.meta.messageId !== 'undefined') {
                 message.messageId = message.body.meta.messageId;
                 message.body = message.body.body;
+            }
+
+            if(message.meta && typeof message.meta.messageId !== 'undefined') {
+                message.messageId = message.meta.messageId;
             }
 
             if(message.headers && typeof message.headers.messageId !== 'undefined') {
@@ -398,16 +403,14 @@ client.setup = function(compose) {
                     response = JSON.parse(message);
                 }
                 catch (e) {
-                    console.error("Error reading JSON response");
-                    console.error(e);
-//                        d(response);
+                    console.error("Error reading JSON response", e);
                     response = null;
                 }
             }
 
             // uhu?!
             if(!response) {
-                console.log("[queue manager] Message is empty.. skipping");
+                d("[queue manager] Message is empty.. skipping");
                 d(response);
                 return;
             }
@@ -418,6 +421,7 @@ client.setup = function(compose) {
             if(response.messageId) {
 
                 var handler = this.get(response.messageId);
+
                 if(handler) {
 
                     if(errorResponse) {
@@ -429,7 +433,7 @@ client.setup = function(compose) {
                             handler.onQueueData.call(handler, response, message);
                         }
                         else {
-                            handler.emitter.trigger('success', response.body);
+                            handler.emitter.trigger(handler.emitterChannel || 'success', response.body);
                         }
                     }
 
@@ -531,7 +535,7 @@ client.setup = function(compose) {
                 var data = JSON.parse(body);
             }
             catch (e) {
-                console.log("Error parsing JSON", e);
+                console.error("Error parsing JSON", e);
                 data = null;
             }
         }
@@ -628,6 +632,12 @@ client.setup = function(compose) {
                 d(err);
                 throw new compose.error.ComposeError(err);
             });
+    };
+
+    Client.prototype.unsubscribe = function(conf) {
+        var me = this;
+        me.adapter().unsubscribe && me.adapter().unsubscribe();
+        return me;
     };
 
     Client.prototype.post = function(path, data, success, error) {

@@ -77,12 +77,14 @@ solib.setup = function(compose) {
      * @return {Promise} Promise callback with result
      */
     Subscription.prototype.create = function() {
+
         var me = this;
         var so = me.container().container();
+
         return new Promise(function(resolve, reject) {
 
             var url = '/'+so.id+'/streams/'+ me.container().name
-                            +'/subscriptions'+ (me.id ? '/'+me.id : '');
+                            +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
             so.getClient().post(url, me.toJson(), function(data) {
 
@@ -176,7 +178,7 @@ solib.setup = function(compose) {
                 me.initialize(data.subscriptions);
                 resolve(me, me.container());
             }, reject);
-        }).bind(so);
+        }).bind(me.container());
     };
 
     /**
@@ -510,11 +512,12 @@ solib.setup = function(compose) {
     Stream.prototype.subscribe = function(fn) {
 
         var me = this;
+        var defaultCallback = 'pubsub';
 
         if(!me.__$pubsub) {
             me.__$pubsub = {
-                callback: 'pubsub',
-                destination: compose.config.apiKey
+                callback: defaultCallback,
+                destination: compose.config.apiKey.replace('Bearer ', '')
             };
         }
 
@@ -522,20 +525,31 @@ solib.setup = function(compose) {
             return new Promise(function(success, failure) {
 
                 try {
+
                     me.container().getClient().subscribe({
                         uuid: me.container().id + '.stream.' + me.name,
                         topic: 'stream',
                         stream: me,
-                        emitter: me.emitter(),
-                        onQueueData: function() {}
+                        subscription: subscription
+//                        emitter: me.emitter(),
+//                        emitterChannel: 'data'
+                        ,onQueueData: function(rawdata) {
+
+                            var data = rawdata.body;
+                            var dataset = new compose.util.DataBag([ data ]);
+                            dataset.container(me);
+
+                            me.emitter().trigger('data', dataset.get(0));
+                        }
                     });
+
                 }
                 catch(e) {
-                    failure(e);
-                    return;
+                    return failure(e);
                 }
 
                 if(fn && typeof fn === 'function') {
+                    console.log("subscribe --> register callback");
                     me.on('data', fn);
                 }
 
@@ -543,10 +557,13 @@ solib.setup = function(compose) {
             });
         };
 
-        return this.getSubscriptions().refresh().then(function() {
-            var subscription = me.getSubscription(me.__$pubsub.callback, "callback");
+        return me.getSubscriptions().refresh().then(function() {
+
+            var subscription = me.getSubscriptions().get(defaultCallback, "callback");
             if(!subscription) {
+
                 subscription = me.addSubscription(me.__$pubsub);
+
                 return subscription.create().then(listener);
             }
             else {
@@ -557,31 +574,38 @@ solib.setup = function(compose) {
     };
 
     /**
-     * Remove a pubsub subscription for the stream
+     * Remove all subscriptions for a stream
      *
      * @param {Function} fn Callback to be called when data is received
      * @return {Stream} The current stream
      */
-    Stream.prototype.unsubscribe = function(fn) {
+    Stream.prototype.unsubscribe = function() {
 
         var me = this;
-        this.getSubscriptions().refresh().then(function() {
-            var subscription = this.getSubscription(me.__$pubsub.callback, "callback");
+
+        return me.getSubscriptions().refresh().then(function() {
+
+            var list = me.getSubscriptions().getList();
 
             var _clean = function() {
                 me.off('data');
                 me.__$pubsub = null;
+                return Promise.resolve();
             };
 
-            if(!subscription) {
-                _clean();
+            if(!list.length) {
+                return _clean();
             }
-            else {
-                subscription.delete().then(_clean);
-            }
-        });
 
-        return this;
+            return Promise.all(list)
+                    .each(function(sub) {
+                        return sub.delete().catch(function(e) {
+                            return Promise.resolve();
+                        });
+                    })
+                    .then(_clean);
+
+        });
     };
 
     Stream.prototype.on = function(event, callback) {

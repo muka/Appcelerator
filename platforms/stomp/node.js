@@ -65,6 +65,8 @@ adapter.initialize = function(compose) {
 
     var queue = this.queue;
 
+    var ApiTokenKey = compose.config.apiKeyToken;
+
     var request = {
         meta: {
             authorization: compose.config.apiKey
@@ -96,11 +98,11 @@ adapter.initialize = function(compose) {
 
     var topics = {
 
-        from: "/topic/" + compose.config.apiKey + '.from'
-        , to: "/topic/" + compose.config.apiKey + '.to'
+        from: "/topic/" + ApiTokenKey + '.from'
+        , to: "/topic/" + ApiTokenKey + '.to'
 
         , stream: function(handler) {
-            return "/topic/" + compose.config.apiKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+            return "/topic/" + ApiTokenKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
         }
 
     };

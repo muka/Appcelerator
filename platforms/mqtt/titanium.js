@@ -42,13 +42,15 @@ adapter.initialize = function(compose) {
         body: {}
     };
 
+    var ApiTokenKey = compose.config.apiKeyToken;
+
     var topics = {
 
-        from: "/topic/" + compose.config.apiKey + '.from'
-        , to: "/topic/" + compose.config.apiKey + '.to'
+        from: "/topic/" + ApiTokenKey + '.from'
+        , to: "/topic/" + ApiTokenKey + '.to'
 
         , stream: function(handler) {
-            return "/topic/" + compose.config.apiKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+            return "/topic/" + ApiTokenKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
         }
 
     };
@@ -58,7 +60,7 @@ adapter.initialize = function(compose) {
         d("Connection requested");
 
         if(!client || !connected) {
-            client = mqtt.registerCallback(compose.config.apiKey, {
+            client = mqtt.registerCallback(ApiTokenKey, {
                 success: function(data){
                     d("Response received");
                     d(data);
@@ -136,7 +138,7 @@ adapter.initialize = function(compose) {
 
     	request.meta.messageId = queue.add(handler);
 
-        mqtt.publishData(compose.config.apiKey, JSON.stringify(request));
+        mqtt.publishData(ApiTokenKey, JSON.stringify(request));
     };
 
 
