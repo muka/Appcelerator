@@ -25,7 +25,7 @@ wolib.setup = function(compose) {
     if(!compose) {
         throw new ComposeError("compose.io module reference not provided, quitting..");
     }
-    
+
     /**
      *
      * A list of Channel of a Stream
@@ -341,12 +341,8 @@ wolib.setup = function(compose) {
      * @returns {WebObject} self reference
      */
     WebObject.prototype.setActions = function(actions) {
-
-        var _actions = this.getActions();
-        _actions = new compose.util.List.ArrayList(actions);
-        _actions.container(this);
-        this.__$actions = _actions;
-
+        this.__$actions = new compose.util.List.ArrayList(actions);
+        this.__$actions.container(this);
         return this;
     };
 
@@ -355,7 +351,7 @@ wolib.setup = function(compose) {
      * @return {Object} The Action object
      */
     WebObject.prototype.getAction = function(name) {
-        return this.getActions().get(name);
+        return this.getActions().get(name, 'name');
     };
 
     /**

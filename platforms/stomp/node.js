@@ -74,8 +74,8 @@ adapter.initialize = function(compose) {
         body: {}
     };
 
-    var host;
-    if (compose.config.url) {
+    var host = compose.config.stomp.host;
+    if (!host && compose.config.url) {
         var urlinfo = parseUrl(compose.config.url);
         host = urlinfo.hostname;
     }
@@ -102,9 +102,21 @@ adapter.initialize = function(compose) {
         , to: "/topic/" + ApiTokenKey + '.to'
 
         , stream: function(handler) {
-            return "/topic/" + ApiTokenKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+
+            var _key = handler.subscription.destination || topicKey;
+            var streamTopic = '/topic/'+ _key + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+
+            d("Stream topic " + streamTopic);
+            return streamTopic;
         }
 
+        , actions: function(handler) {
+
+            var actionsTopic = '/topic/'+ handler.actions.container().id + '.actions';
+
+            d("Actions topic " + actionsTopic);
+            return actionsTopic;
+        }
     };
 
     adapter.connect = function(handler, connectionSuccess, connectionFail) {

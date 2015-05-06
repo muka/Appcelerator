@@ -110,11 +110,18 @@ adapter.initialize = function(compose) {
 
             var _key = handler.subscription.destination || topicKey;
 
-//            var streamTopic = "/topic/" + _key + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
             var streamTopic = _key + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
 
             d("Stream topic " + streamTopic);
             return streamTopic;
+        }
+
+        , actions: function(handler) {
+
+            var actionsTopic = handler.actions.container().id + '/actions';
+
+            d("Actions topic " + actionsTopic);
+            return actionsTopic;
         }
 
     };
@@ -231,6 +238,10 @@ adapter.initialize = function(compose) {
         d("Listening to " + topic);
 
         client.on('message', function(srctopic, message, response) {
+
+//            console.log(src);
+//            console.log(message.toString());
+
             if(topic === srctopic) {
 
                 d("New message from subscription topic");
@@ -247,8 +258,13 @@ adapter.initialize = function(compose) {
         });
 
         client.subscribe(topic, function() {
-            d('Subscribed');
+            d('Subscribed to subscription topic');
         });
+
+//        client.subscribe("/topic/#", function() {
+//            d('Catch all subscribed');
+//        });
+
     };
 
 

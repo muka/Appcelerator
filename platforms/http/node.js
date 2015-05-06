@@ -41,17 +41,19 @@ adapter.initialize = function(compose) {
 
         var params = parseUrl(compose.config.url + handler.path);
         params.headers = {
-            "Content-Type": "application/json",
             "Cache-Control": "no-cache",
             "Authorization": compose.config.apiKey
         };
+
+        if(typeof handler.body === 'object' || handler.body instanceof Array) {
+            params.headers["Content-Type"] = "application/json";
+        }
 
         params.method = handler.method;
 
         if(DEBUG) {
             d("[node client] Preparing request");
-            d('Params:');
-            d(JSON.stringify(params));
+//            d('Params:'); d(JSON.stringify(params));
         }
 
         var req = http.request(params, function(res) {

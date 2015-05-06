@@ -117,6 +117,7 @@ var Compose = function(config) {
 
             dst[i] = v;
         }
+
         return dst;
     };
 

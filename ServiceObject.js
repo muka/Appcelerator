@@ -233,7 +233,7 @@ solib.setup = function(compose) {
 
     /**
      * Invoke the ServiceObject action
-     * @param {mixed} body The body of the request
+     * @param {String} body The body of the request as STRING
      * @return {Promise} Promise callback with result
      */
     Actuation.prototype.invoke = function(body) {
@@ -241,12 +241,14 @@ solib.setup = function(compose) {
         return new Promise(function(resolve, reject) {
 
             var url = '/'+ me.container().id +'/actuations/'+ me.name;
-            me.container().getClient().post(url, body, function(data) {
+            me.container().getClient().post(url, body.toString(), function(data) {
 
                 me.id = data.id;
                 me.createdAt = data.createdAt;
 
-                resolve && resolve(me);
+                console.log('invoked!');
+
+                resolve(me);
             }, reject);
         });
     };
@@ -312,15 +314,32 @@ solib.setup = function(compose) {
      * @constructor
      * @augments compose.util.List.ArrayList
      */
-    var ActuationList = function() {
+    var ActuationList = function(obj) {
         compose.util.List.ArrayList.apply(this, arguments);
+        this.initialize(obj);
     };
     compose.util.extend(ActuationList, compose.util.List.ArrayList);
 
     ActuationList.prototype.validate = function(obj) {
+
         var action = new Actuation(obj);
         action.container(this.container());
+
         return action;
+    };
+
+    /*
+     *
+     * @param {boolean} asString Return as string if true, object otherwise
+     * @returns {Object|String}
+     */
+    ActuationList.prototype.toJson = function(asString) {
+        var json = compose.util.copyVal(this.getList());
+        return asString ? JSON.stringify(json) : json;
+    };
+
+    ActuationList.prototype.toString = function() {
+        return this.toJson(true);
     };
 
     ActuationList.prototype.getApi = getApi;
@@ -333,13 +352,60 @@ solib.setup = function(compose) {
     ActuationList.prototype.refresh = function() {
         var me = this;
         return new Promise(function(resolve, reject) {
-            var url = '/'+me.container().id+'/actuations';
+
+            var url = '/'+ me.container().id +'/actuations';
             me.container().getClient().get(url, null, function(data) {
+
                 me.container().setActions(data.actions);
                 resolve(data.actions);
-            }, reject).bind(me.container());
-        });
+
+            }, reject);
+
+        }).bind(me.container());
     };
+
+    /**
+     * Listen for actuation request
+     *
+     * @return {Promise} A promise for the subscription object creation
+     */
+    ActuationList.prototype.listen = function(fn) {
+
+        var me = this;
+
+        return new Promise(function(success, failure) {
+
+            try {
+
+                me.container().getClient().subscribe({
+                    uuid: me.container().id + '.actions',
+                    topic: 'actions',
+                    actions: me,
+                    onQueueData: function(message) {
+
+                        var rawdata = message.body;
+
+                        var id = rawdata && rawdata.description && rawdata.description.name ? rawdata.description.name : null;
+                        var params = rawdata && rawdata.parameters ? rawdata.parameters : null;
+
+                        me.container().emitter().trigger('actions', id, params, rawdata);
+                    }
+                });
+
+            }
+            catch(e) {
+                return failure(e);
+            }
+
+            if(fn && typeof fn === 'function') {
+                me.container().on('actions', fn);
+            }
+
+            success();
+        });
+
+    };
+
 
     /**
      *
@@ -549,7 +615,6 @@ solib.setup = function(compose) {
                 }
 
                 if(fn && typeof fn === 'function') {
-                    console.log("subscribe --> register callback");
                     me.on('data', fn);
                 }
 
@@ -1360,11 +1425,11 @@ solib.setup = function(compose) {
      */
     ServiceObject.prototype.setActions = function(actions) {
 
-        var _actions = this.getActions();
-        _actions = new ActuationList(actions);
-        _actions.container(this);
+        var list = new ActuationList();
+        list.container(this);
+        list.initialize(actions);
 
-        this.__$actions = _actions;
+        this.__$actions = list;
 
         return this;
     };
@@ -1378,6 +1443,7 @@ solib.setup = function(compose) {
     ServiceObject.prototype.create = function() {
         var me = this;
         return new Promise(function(resolve, reject) {
+
             me.getClient().post('/', me.toJson(), function(data) {
                 if(data) {
                     // set internal reference to soId and createdAt
