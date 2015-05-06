@@ -122,6 +122,7 @@ var Compose = function(config) {
 
             dst[i] = v;
         }
+
         return dst;
     };
 
@@ -156,10 +157,7 @@ var Compose = function(config) {
     DEBUG = config.debug;
 
     d("Configuration:");
-    d("---------------");
     d(compose.config);
-    d("---------------");
-
 
     /**
      * Sniff the current enviroment
@@ -266,7 +264,7 @@ var Compose = function(config) {
     }
 
 
-
+    compose.config.apiKeyToken = compose.config.apiKey.replace('Bearer ', '');
 
     compose.lib.Promise = compose.util.require('bluebird');
     compose.lib.DefinitionReader = compose.util.module('./utils/DefinitionReader');
@@ -841,14 +839,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ******************************************************************************/
 
-var DEBUG = false;
-
-var d = function(m) {
-    (DEBUG === true || DEBUG > 20) && console.log(m);
-};
-
 var client = module.exports;
 client.setup = function(compose) {
+
+    var DEBUG = false;
+
+    var d = function(m) {
+        (DEBUG === true || DEBUG > 20) && console.log(m);
+    };
 
     var ComposeError = compose.error.ComposeError;
     var guid = function() {
@@ -1199,9 +1197,14 @@ client.setup = function(compose) {
                 delete message.body.messageId;
             }
 
+
             if(message.body.meta && typeof message.body.meta.messageId !== 'undefined') {
                 message.messageId = message.body.meta.messageId;
                 message.body = message.body.body;
+            }
+
+            if(message.meta && typeof message.meta.messageId !== 'undefined') {
+                message.messageId = message.meta.messageId;
             }
 
             if(message.headers && typeof message.headers.messageId !== 'undefined') {
@@ -1222,16 +1225,14 @@ client.setup = function(compose) {
                     response = JSON.parse(message);
                 }
                 catch (e) {
-                    console.error("Error reading JSON response");
-                    console.error(e);
-//                        d(response);
+                    console.error("Error reading JSON response", e);
                     response = null;
                 }
             }
 
             // uhu?!
             if(!response) {
-                console.log("[queue manager] Message is empty.. skipping");
+                d("[queue manager] Message is empty.. skipping");
                 d(response);
                 return;
             }
@@ -1242,6 +1243,7 @@ client.setup = function(compose) {
             if(response.messageId) {
 
                 var handler = this.get(response.messageId);
+
                 if(handler) {
 
                     if(errorResponse) {
@@ -1253,7 +1255,7 @@ client.setup = function(compose) {
                             handler.onQueueData.call(handler, response, message);
                         }
                         else {
-                            handler.emitter.trigger('success', response.body);
+                            handler.emitter.trigger(handler.emitterChannel || 'success', response.body);
                         }
                     }
 
@@ -1355,7 +1357,7 @@ client.setup = function(compose) {
                 var data = JSON.parse(body);
             }
             catch (e) {
-                console.log("Error parsing JSON", e);
+                console.error("Error parsing JSON", e);
                 data = null;
             }
         }
@@ -1454,6 +1456,12 @@ client.setup = function(compose) {
             });
     };
 
+    Client.prototype.unsubscribe = function(conf) {
+        var me = this;
+        me.adapter().unsubscribe && me.adapter().unsubscribe();
+        return me;
+    };
+
     Client.prototype.post = function(path, data, success, error) {
         return this.request('post', path, data, success, error);
     };
@@ -1514,7 +1522,7 @@ wolib.setup = function(compose) {
     if(!compose) {
         throw new ComposeError("compose.io module reference not provided, quitting..");
     }
-    
+
     /**
      *
      * A list of Channel of a Stream
@@ -1830,12 +1838,8 @@ wolib.setup = function(compose) {
      * @returns {WebObject} self reference
      */
     WebObject.prototype.setActions = function(actions) {
-
-        var _actions = this.getActions();
-        _actions = new compose.util.List.ArrayList(actions);
-        _actions.container(this);
-        this.__$actions = _actions;
-
+        this.__$actions = new compose.util.List.ArrayList(actions);
+        this.__$actions.container(this);
         return this;
     };
 
@@ -1844,7 +1848,7 @@ wolib.setup = function(compose) {
      * @return {Object} The Action object
      */
     WebObject.prototype.getAction = function(name) {
-        return this.getActions().get(name);
+        return this.getActions().get(name, 'name');
     };
 
     /**
@@ -2039,12 +2043,14 @@ solib.setup = function(compose) {
      * @return {Promise} Promise callback with result
      */
     Subscription.prototype.create = function() {
+
         var me = this;
         var so = me.container().container();
+
         return new Promise(function(resolve, reject) {
 
             var url = '/'+so.id+'/streams/'+ me.container().name
-                            +'/subscriptions'+ (me.id ? '/'+me.id : '');
+                            +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
             so.getClient().post(url, me.toJson(), function(data) {
 
@@ -2138,7 +2144,7 @@ solib.setup = function(compose) {
                 me.initialize(data.subscriptions);
                 resolve(me, me.container());
             }, reject);
-        }).bind(so);
+        }).bind(me.container());
     };
 
     /**
@@ -2193,7 +2199,7 @@ solib.setup = function(compose) {
 
     /**
      * Invoke the ServiceObject action
-     * @param {mixed} body The body of the request
+     * @param {String} body The body of the request as STRING
      * @return {Promise} Promise callback with result
      */
     Actuation.prototype.invoke = function(body) {
@@ -2201,12 +2207,14 @@ solib.setup = function(compose) {
         return new Promise(function(resolve, reject) {
 
             var url = '/'+ me.container().id +'/actuations/'+ me.name;
-            me.container().getClient().post(url, body, function(data) {
+            me.container().getClient().post(url, body.toString(), function(data) {
 
                 me.id = data.id;
                 me.createdAt = data.createdAt;
 
-                resolve && resolve(me);
+                console.log('invoked!');
+
+                resolve(me);
             }, reject);
         });
     };
@@ -2272,15 +2280,32 @@ solib.setup = function(compose) {
      * @constructor
      * @augments compose.util.List.ArrayList
      */
-    var ActuationList = function() {
+    var ActuationList = function(obj) {
         compose.util.List.ArrayList.apply(this, arguments);
+        this.initialize(obj);
     };
     compose.util.extend(ActuationList, compose.util.List.ArrayList);
 
     ActuationList.prototype.validate = function(obj) {
+
         var action = new Actuation(obj);
         action.container(this.container());
+
         return action;
+    };
+
+    /*
+     *
+     * @param {boolean} asString Return as string if true, object otherwise
+     * @returns {Object|String}
+     */
+    ActuationList.prototype.toJson = function(asString) {
+        var json = compose.util.copyVal(this.getList());
+        return asString ? JSON.stringify(json) : json;
+    };
+
+    ActuationList.prototype.toString = function() {
+        return this.toJson(true);
     };
 
     ActuationList.prototype.getApi = getApi;
@@ -2293,13 +2318,60 @@ solib.setup = function(compose) {
     ActuationList.prototype.refresh = function() {
         var me = this;
         return new Promise(function(resolve, reject) {
-            var url = '/'+me.container().id+'/actuations';
+
+            var url = '/'+ me.container().id +'/actuations';
             me.container().getClient().get(url, null, function(data) {
+
                 me.container().setActions(data.actions);
                 resolve(data.actions);
-            }, reject).bind(me.container());
-        });
+
+            }, reject);
+
+        }).bind(me.container());
     };
+
+    /**
+     * Listen for actuation request
+     *
+     * @return {Promise} A promise for the subscription object creation
+     */
+    ActuationList.prototype.listen = function(fn) {
+
+        var me = this;
+
+        return new Promise(function(success, failure) {
+
+            try {
+
+                me.container().getClient().subscribe({
+                    uuid: me.container().id + '.actions',
+                    topic: 'actions',
+                    actions: me,
+                    onQueueData: function(message) {
+
+                        var rawdata = message.body;
+
+                        var id = rawdata && rawdata.description && rawdata.description.name ? rawdata.description.name : null;
+                        var params = rawdata && rawdata.parameters ? rawdata.parameters : null;
+
+                        me.container().emitter().trigger('actions', id, params, rawdata);
+                    }
+                });
+
+            }
+            catch(e) {
+                return failure(e);
+            }
+
+            if(fn && typeof fn === 'function') {
+                me.container().on('actions', fn);
+            }
+
+            success();
+        });
+
+    };
+
 
     /**
      *
@@ -2472,11 +2544,12 @@ solib.setup = function(compose) {
     Stream.prototype.subscribe = function(fn) {
 
         var me = this;
+        var defaultCallback = 'pubsub';
 
         if(!me.__$pubsub) {
             me.__$pubsub = {
-                callback: 'pubsub',
-                destination: compose.config.apiKey
+                callback: defaultCallback,
+                destination: compose.config.apiKey.replace('Bearer ', '')
             };
         }
 
@@ -2484,17 +2557,27 @@ solib.setup = function(compose) {
             return new Promise(function(success, failure) {
 
                 try {
+
                     me.container().getClient().subscribe({
                         uuid: me.container().id + '.stream.' + me.name,
                         topic: 'stream',
                         stream: me,
-                        emitter: me.emitter(),
-                        onQueueData: function() {}
+                        subscription: subscription
+//                        emitter: me.emitter(),
+//                        emitterChannel: 'data'
+                        ,onQueueData: function(rawdata) {
+
+                            var data = rawdata.body;
+                            var dataset = new compose.util.DataBag([ data ]);
+                            dataset.container(me);
+
+                            me.emitter().trigger('data', dataset.get(0));
+                        }
                     });
+
                 }
                 catch(e) {
-                    failure(e);
-                    return;
+                    return failure(e);
                 }
 
                 if(fn && typeof fn === 'function') {
@@ -2505,10 +2588,13 @@ solib.setup = function(compose) {
             });
         };
 
-        return this.getSubscriptions().refresh().then(function() {
-            var subscription = me.getSubscription(me.__$pubsub.callback, "callback");
+        return me.getSubscriptions().refresh().then(function() {
+
+            var subscription = me.getSubscriptions().get(defaultCallback, "callback");
             if(!subscription) {
+
                 subscription = me.addSubscription(me.__$pubsub);
+
                 return subscription.create().then(listener);
             }
             else {
@@ -2519,31 +2605,38 @@ solib.setup = function(compose) {
     };
 
     /**
-     * Remove a pubsub subscription for the stream
+     * Remove all subscriptions for a stream
      *
      * @param {Function} fn Callback to be called when data is received
      * @return {Stream} The current stream
      */
-    Stream.prototype.unsubscribe = function(fn) {
+    Stream.prototype.unsubscribe = function() {
 
         var me = this;
-        this.getSubscriptions().refresh().then(function() {
-            var subscription = this.getSubscription(me.__$pubsub.callback, "callback");
+
+        return me.getSubscriptions().refresh().then(function() {
+
+            var list = me.getSubscriptions().getList();
 
             var _clean = function() {
                 me.off('data');
                 me.__$pubsub = null;
+                return Promise.resolve();
             };
 
-            if(!subscription) {
-                _clean();
+            if(!list.length) {
+                return _clean();
             }
-            else {
-                subscription.delete().then(_clean);
-            }
-        });
 
-        return this;
+            return Promise.all(list)
+                    .each(function(sub) {
+                        return sub.delete().catch(function(e) {
+                            return Promise.resolve();
+                        });
+                    })
+                    .then(_clean);
+
+        });
     };
 
     Stream.prototype.on = function(event, callback) {
@@ -3298,11 +3391,11 @@ solib.setup = function(compose) {
      */
     ServiceObject.prototype.setActions = function(actions) {
 
-        var _actions = this.getActions();
-        _actions = new ActuationList(actions);
-        _actions.container(this);
+        var list = new ActuationList();
+        list.container(this);
+        list.initialize(actions);
 
-        this.__$actions = _actions;
+        this.__$actions = list;
 
         return this;
     };
@@ -3316,6 +3409,7 @@ solib.setup = function(compose) {
     ServiceObject.prototype.create = function() {
         var me = this;
         return new Promise(function(resolve, reject) {
+
             me.getClient().post('/', me.toJson(), function(data) {
                 if(data) {
                     // set internal reference to soId and createdAt
@@ -3586,7 +3680,7 @@ adapter.initialize = function(compose) {
 
     var Stomp = compose.require("stompjs");
     Stomp = typeof Stomp === 'function' ? Stomp : window.Stomp;
-    
+
     DEBUG = compose.config.debug;
 
     var queue = this.queue;
@@ -3596,6 +3690,8 @@ adapter.initialize = function(compose) {
         var urlinfo = parseUrl(compose.config.url);
         host = urlinfo.hostname;
     }
+
+    var ApiTokenKey = compose.config.apiKeyToken;
 
     compose.config.stomp = compose.config.stomp || {};
     var stompConf = {
@@ -3609,11 +3705,11 @@ adapter.initialize = function(compose) {
     stompConf.path = stompConf.path.length && stompConf.path.substr(0,1) !== '/' ? '/' + stompConf.path  : stompConf.path ;
 
     var topics = {
-        from: "/topic/" + compose.config.apiKey + '.from',
-        to: "/topic/" + compose.config.apiKey + '.to'
+        from: "/topic/" + ApiTokenKey + '.from',
+        to: "/topic/" + ApiTokenKey + '.to'
 
         , stream: function(handler) {
-            return "/topic/" + compose.config.apiKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+            return "/topic/" + ApiTokenKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
         }
     };
 
