@@ -30,6 +30,9 @@ compose.io is the [COMPOSE] JavaScript library designed to be used with [Titaniu
 - [Getting realtime updates](#getting-realtime-updates)
     - [Listening for updates to a stream](#listening-for-updates-to-a-stream)
     - [Listening for all the updates](#listening-for-all-the-updates)
+- [Actuations](#actuations)
+    - [Invoking an actuation](#invoking-an-actuation)
+    - [Listening for actuations](#listening-for-actuations)
 - [Additional notes](#additional-notes)
     - [Async impl](#async-impl)
     - [API support](#api-support)
@@ -530,7 +533,7 @@ To use `http` please see the subproject `examples/subscriptions` to setup a base
 It is possible to get real time updates for a specific stream by subscribinf to the stream
 
 ```
-droid.getStream('stream name').subscribe(function(data) {
+drone.getStream('stream name').subscribe(function(data) {
     console.log("Stream updated!");
     console.log(data);
 }) // .then().catch().finally()
@@ -539,7 +542,7 @@ droid.getStream('stream name').subscribe(function(data) {
 To stop listening
 
 ```
-droid.getStream('stream name').unubscribe(); // .then().catch().finally()
+drone.getStream('stream name').unubscribe(); // .then().catch().finally()
 ```
 
 Under the hood, the library will take care to retrieve a fresh list of available subscriptions, create a new `pubsub` subscription
@@ -551,17 +554,48 @@ In some case could be useful to receive all the notifications available, to do s
 
 ```
 // register to updates
-droid.on("data", function(data, raw) {
+drone.on("data", function(data, raw) {
     console.log("Received data ", data);
     console.log("Raw message was ", raw);
 })
 
 // unregister from updates
-droid.off("data")
+drone.off("data")
 
 
 ```
 
+#Actuations
+
+Actuations allow to perform operations on a Service Object. Actuation need to be specified when creating a Service Object
+
+###Invoking an actuation
+
+To invoke an actuation use the `invoke` method and provide additional parameters as argument
+
+Note that the argument passed to `invoke` **must** be a string, so to send JSON take care of serialize
+
+```
+
+drone.getAction('turn-left').invoke(JSON.stringify({ some: 'params' })).then(function() {
+    console.log('________ invoked action');
+});
+
+```
+
+###Listening for actuations
+
+On the device side you can listen for actions and implement actuations on their arrival.
+
+```
+
+drone.getActions().listen(function(id, params, raw) {
+
+    console.log("Perform actuation %s with params: %s", id, params);
+
+}) // .then().catch().finally();
+
+```
 
 #Additional notes
 
