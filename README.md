@@ -666,6 +666,11 @@ API docs needs review. Can be generated using `jsdoc` and will be added to the r
 
 #Changelog
 
+**v0.6.0**
+
+- Reviewed and tested subscriptions and actuations
+- Initial support for `Bearer` tokens
+
 **v0.5.2**
 
 - Added titanium build
@@ -673,7 +678,6 @@ API docs needs review. Can be generated using `jsdoc` and will be added to the r
 **v0.5.0**
 
 - Added build tool for browser
-- removed method `Compose.setup` in favour of `new Compose`
 
 **v0.4.1**
 
