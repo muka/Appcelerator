@@ -577,9 +577,8 @@ Note that the argument passed to `invoke` **must** be a string, so to send JSON 
 
 ```
 
-drone.getAction('turn-left').invoke(JSON.stringify({ some: 'params' })).then(function() {
-    console.log('________ invoked action');
-});
+var body = JSON.stringify({ some: 'params' }); // must be a string!
+drone.getAction('turn-left').invoke(body) // .then().catch().finally()
 
 ```
 
@@ -593,7 +592,7 @@ drone.getActions().listen(function(id, params, raw) {
 
     console.log("Perform actuation %s with params: %s", id, params);
 
-}) // .then().catch().finally();
+}) // .then().catch().finally()
 
 ```
 
