@@ -3709,7 +3709,20 @@ adapter.initialize = function(compose) {
         to: "/topic/" + ApiTokenKey + '.to'
 
         , stream: function(handler) {
-            return "/topic/" + ApiTokenKey + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+
+            var _key = handler.subscription.destination || ApiTokenKey;
+            var streamTopic = '/topic/'+ _key + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+
+            d("Stream topic " + streamTopic);
+            return streamTopic;
+        }
+
+        , actions: function(handler) {
+
+            var actionsTopic = '/topic/'+ handler.actions.container().id + '.actions';
+
+            d("Actions topic " + actionsTopic);
+            return actionsTopic;
         }
     };
 

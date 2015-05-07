@@ -74,7 +74,7 @@ adapter.initialize = function(compose) {
         body: {}
     };
 
-    var host = compose.config.stomp.host;
+    var host = compose.config.stomp && compose.config.stomp.host ? compose.config.stomp.host : null;
     if (!host && compose.config.url) {
         var urlinfo = parseUrl(compose.config.url);
         host = urlinfo.hostname;
@@ -103,7 +103,7 @@ adapter.initialize = function(compose) {
 
         , stream: function(handler) {
 
-            var _key = handler.subscription.destination || topicKey;
+            var _key = handler.subscription.destination || ApiTokenKey;
             var streamTopic = '/topic/'+ _key + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
 
             d("Stream topic " + streamTopic);
