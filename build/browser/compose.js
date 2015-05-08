@@ -1192,26 +1192,38 @@ client.setup = function(compose) {
                 message.body = JSON.parse(message.body);
             }
 
-            if(message.body && typeof message.body.messageId !== 'undefined') {
+            if(message.body && message.body.messageId !== undefined) {
                 message.messageId = message.body.messageId;
                 delete message.body.messageId;
             }
 
+            if(message.meta && message.meta.messageId !== undefined) {
+                message.messageId = message.meta.messageId;
+            }
 
-            if(message.body.meta && typeof message.body.meta.messageId !== 'undefined') {
+            if(message.body.meta && message.body.meta.messageId !== undefined) {
                 message.messageId = message.body.meta.messageId;
                 message.body = message.body.body;
             }
 
-            if(message.meta && typeof message.meta.messageId !== 'undefined') {
-                message.messageId = message.meta.messageId;
-            }
-
-            if(message.headers && typeof message.headers.messageId !== 'undefined') {
+            if(message.headers && message.headers.messageId !== undefined) {
                 message.messageId = message.headers.messageId;
             }
 
         };
+
+        // performance hack, this will be not optimized
+        var parseJson = function(c) {
+            try {
+                return JSON.parse(c);
+            }
+            catch (e) {
+                console.error("Error reading JSON response", e);
+            }
+
+            return null;
+        };
+
 
         this.handleResponse = function(message, raw) {
 
@@ -1219,15 +1231,8 @@ client.setup = function(compose) {
             if(typeof message === 'object') {
                 response = message;
             }
-
-            if(typeof message === 'string') {
-                try {
-                    response = JSON.parse(message);
-                }
-                catch (e) {
-                    console.error("Error reading JSON response", e);
-                    response = null;
-                }
+            else if(typeof message === 'string') {
+                response = parseJson(message);
             }
 
             // uhu?!
