@@ -1732,7 +1732,7 @@ wolib.setup = function(compose) {
     /**
      * @return {ChannelsList} The list of channels
      */
-    Stream.prototype.getChannels = function() {
+    Stream.prototype.channels = Stream.prototype.getChannels = function() {
         return this.channels;
     };
 
@@ -1740,8 +1740,14 @@ wolib.setup = function(compose) {
      * @param {String} name The channel name
      * @return {Object} The requested channel or null if not available
      */
-    Stream.prototype.getChannel = function(name) {
-        return this.channels.get(name);
+    Stream.prototype.channel = Stream.prototype.getChannel = function(name) {
+
+        var c = this.channels.get(name);
+        if(c) {
+            return c;
+        }
+
+        throw new ComposeError("Channel not found");
     };
 
     /*
@@ -1810,7 +1816,7 @@ wolib.setup = function(compose) {
         return this;
     };
 
-    WebObject.prototype.getStreams = function() {
+    WebObject.prototype.getStreams = WebObject.prototype.streams = function() {
         return this.__$streams;
     };
 
@@ -1828,12 +1834,18 @@ wolib.setup = function(compose) {
      * @param {String} name The stream name
      * @return {Object} The Streamobject
      */
-    WebObject.prototype.getStream = function(name) {
-        return this.getStreams().get(name);
+    WebObject.prototype.stream = WebObject.prototype.getStream = function(name) {
+
+        var s = this.getStreams().get(name);
+        if(s) {
+            return s;
+        }
+
+        throw new ComposeError("Stream not found");
     };
 
 
-    WebObject.prototype.getActions = function() {
+    WebObject.prototype.actions = WebObject.prototype.getActions = function() {
         return this.__$actions;
     };
 
@@ -1852,8 +1864,15 @@ wolib.setup = function(compose) {
      * @param {String} name The action name
      * @return {Object} The Action object
      */
-    WebObject.prototype.getAction = function(name) {
-        return this.getActions().get(name, 'name');
+    WebObject.prototype.action = WebObject.prototype.getAction = function(name) {
+
+        var a = this.getActions().get(name, 'name');
+        if(a) {
+            return a;
+        }
+
+        throw new ComposeError("Action not found");
+
     };
 
     /**
