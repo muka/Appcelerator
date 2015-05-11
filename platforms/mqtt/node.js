@@ -203,9 +203,12 @@ adapter.initialize = function(compose) {
 
         if (handler.body) {
             var body = handler.body;
-//            if (typeof body === "string") {
-//                body = JSON.parse(body);
-//            }
+            if (typeof body === "string") {
+                try {
+                    body = JSON.parse(body);
+                }
+                catch(e) {}
+            }
             request.body = body;
         }
         else {

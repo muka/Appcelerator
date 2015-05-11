@@ -79,7 +79,10 @@ adapter.initialize = function(compose) {
                         }
 
                         if(typeof data === 'string'){
-                            data = JSON.parse(data);
+                            try {
+                                data = JSON.parse(data);
+                            }
+                            catch(e) {}
                         }
 
                         handler.emitter.trigger('success', data);

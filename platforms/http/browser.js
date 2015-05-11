@@ -48,8 +48,14 @@ httplib.initialize = function(compose) {
                 });
             }
             else {
-                var json = JSON.parse(http.responseText);
-                handler.emitter.trigger('success', json);
+
+                var data = http.responseText;
+
+                try {
+                    data = JSON.parse(data);
+                }
+                catch(e) {}
+                handler.emitter.trigger('success', data);
             }
         };
 
