@@ -3897,7 +3897,10 @@ adapter.initialize = function(compose) {
         if (handler.body) {
             var body = handler.body;
             if (typeof body === "string") {
-                body = JSON.parse(body);
+                try {
+                    body = JSON.parse(body);
+                }
+                catch(e) {}
             }
             request.body = body;
         }
@@ -3996,8 +3999,14 @@ httplib.initialize = function(compose) {
                 });
             }
             else {
-                var json = JSON.parse(http.responseText);
-                handler.emitter.trigger('success', json);
+
+                var data = http.responseText;
+
+                try {
+                    data = JSON.parse(data);
+                }
+                catch(e) {}
+                handler.emitter.trigger('success', data);
             }
         };
 

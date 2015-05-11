@@ -3871,15 +3871,18 @@ adapter.initialize = function(compose) {
 
             d("[titanium client] Response received " + status);
 
-            try {
-                data = JSON.parse(data);
-            }
-            catch (e) {
-                status = 500;
-                data = {
-                    message: "Response from server is not readable"
-                };
-            }
+//            try {
+                try {
+                    data = JSON.parse(body);
+                }
+                catch(e) {}
+//            }
+//            catch (e) {
+//                status = 500;
+//                data = {
+//                    message: "Response from server is not readable"
+//                };
+//            }
 
             if(status >= 400) {
                 handler.emitter.trigger('error', data ? data : {
