@@ -3742,7 +3742,7 @@ adapter.initialize = function(compose) {
     	request.meta.url = handler.path;
 
     	if(handler.body){
-    		request.body = handler.body;
+            request.body = handler.body;
     	}
 
     	d("Request:");
