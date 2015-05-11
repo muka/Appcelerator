@@ -302,7 +302,7 @@ module.exports = Compose;
 
 Compose.prototype.require = function(m) {
     var modules = {
-        './utils/DefinitionReader': function() {
+        './utils/DefinitionReader': (function() {
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
@@ -400,8 +400,9 @@ reader.setup = function(compose) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-},
-'./utils/List': function() {
+})()
+,
+'./utils/List': (function() {
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
@@ -811,8 +812,9 @@ listlib.setup = function(compose) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-},
-'./client': function() {
+})()
+,
+'./client': (function() {
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
@@ -1491,8 +1493,9 @@ client.setup = function(compose) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-},
-'./WebObject': function() {
+})()
+,
+'./WebObject': (function() {
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
@@ -1979,8 +1982,9 @@ wolib.setup = function(compose) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-},
-'./ServiceObject': function() {
+})()
+,
+'./ServiceObject': (function() {
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
@@ -3601,8 +3605,9 @@ solib.setup = function(compose) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-},
-'./platforms/mqtt/titanium': function() {
+})()
+,
+'./platforms/mqtt/titanium': (function() {
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
@@ -3780,8 +3785,9 @@ adapter.initialize = function(compose) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-},
-'./platforms/stomp/titanium': function() {
+})()
+,
+'./platforms/stomp/titanium': (function() {
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
@@ -3811,8 +3817,9 @@ stomplib.initialize = function(compose) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-},
-'./platforms/http/titanium': function() {
+})()
+,
+'./platforms/http/titanium': (function() {
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
@@ -3919,8 +3926,9 @@ adapter.initialize = function(compose) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-},
-'bluebird': function() {
+})()
+,
+'bluebird': (function() {
 var exports = {}; var module = { exports: exports };
 
 /* @preserve
@@ -9023,7 +9031,8 @@ function isUndefined(arg) {
 
 return module && module.exports && Object.keys(module.exports).length
         ? module.exports : exports;
-}
+})()
+
     };
     
     if(typeof modules[m] !== 'function') {
