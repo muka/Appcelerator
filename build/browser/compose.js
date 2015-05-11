@@ -1,6 +1,6 @@
 (function(self) {
 
-    var $$Compose = (function() { var exports = {}; 
+    var $$Compose = (function() { var exports = {};
 var module = { exports: exports };
 
 /*******************************************************************************
@@ -9224,12 +9224,12 @@ return module && module.exports && Object.keys(module.exports).length
 })()
 
     };
-    
+
     if(typeof modules[m] !== 'function') {
         throw new Error("module not found " + m);
     }
-    
-    return modules[m]();
+
+    return modules[m];
 };
 
 return Compose; }).call(self);

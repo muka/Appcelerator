@@ -9034,11 +9034,11 @@ return module && module.exports && Object.keys(module.exports).length
 })()
 
     };
-    
+
     if(typeof modules[m] !== 'function') {
         throw new Error("module not found " + m);
     }
-    
-    return modules[m]();
+
+    return modules[m];
 };
 
