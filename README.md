@@ -139,9 +139,7 @@ var api = new Compose({
         password: 'shines'
     }
     stomp: { /* see above.. */}
-})
-.then(function(api) {  console.log("Ready!");  })
-.catch(function(e) {  console.error("Error!", e);  });
+});
 
 ```
 
