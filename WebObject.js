@@ -299,6 +299,15 @@ wolib.setup = function(compose) {
 
         obj = obj || {};
 
+        if(typeof obj === 'string') {
+            try {
+                obj = JSON.parse(obj);
+            }
+            catch(e) {
+                throw new ComposeError("Object definition cannot be parsed");
+            }
+        }
+
         for (var i in obj) {
             if (typeof obj[i] !== 'function') {
                 this[i] = obj[i];

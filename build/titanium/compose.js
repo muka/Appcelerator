@@ -1799,6 +1799,15 @@ wolib.setup = function(compose) {
 
         obj = obj || {};
 
+        if(typeof obj === 'string') {
+            try {
+                obj = JSON.parse(obj);
+            }
+            catch(e) {
+                throw new ComposeError("Object definition cannot be parsed");
+            }
+        }
+
         for (var i in obj) {
             if (typeof obj[i] !== 'function') {
                 this[i] = obj[i];
@@ -3467,6 +3476,9 @@ solib.setup = function(compose) {
             me.getClient().get('/'+me.id, null, function(data) {
 
                 if(data) {
+
+                    console.log("-------------->", typeof data);
+
                     me.initialize(data);
                 }
                 resolve && resolve(me);
@@ -3595,7 +3607,8 @@ solib.setup = function(compose) {
         return new Promise(function(resolve, reject) {
             client.get('/', null, function(data) {
                 client.ServiceObject = null;
-                resolve(data);
+                var json = typeof data === 'string' ? JSON.parse(data) : data;
+                resolve(json);
             }, reject);
         }).bind(client);
     };
