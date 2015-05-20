@@ -2244,8 +2244,6 @@ solib.setup = function(compose) {
                 me.id = data.id;
                 me.createdAt = data.createdAt;
 
-                console.log('invoked!');
-
                 resolve(me);
             }, reject);
         });
@@ -3476,9 +3474,6 @@ solib.setup = function(compose) {
             me.getClient().get('/'+me.id, null, function(data) {
 
                 if(data) {
-
-                    console.log("-------------->", typeof data);
-
                     me.initialize(data);
                 }
                 resolve && resolve(me);
