@@ -1,47 +1,47 @@
 {
-    "name": "compose.io",
-    "description": "Set of functionalities to handle COMPOSE Service Objects",
-    "version": "0.4.0",
-    "homepage": "https://github.com/compose-eu/Appcelerator",
-    "author": "Luca Capra",
-    "license": "Apache 2",
-    "main": "index.js",
-    "directories": {
-        "test": "test"
-    },
-    "scripts": {
-        "test": "jasmine-node test/spec/  --captureExceptions",
-	"jsdoc": "jsdoc ./ -c=jsdoc.json -l -r"
-    },
-    "keywords": [
-        "compose",
-        "service-object",
-        "IoT"
-    ],
-    "repository" : {
-        "type" : "git",
-        "url" : "https://github.com/compose-eu/Appcelerator.git"
-    },
-    "dependencies": {
-        "bluebird": "*",
-        "mqtt": "*",
-        "stompjs": "*"
-    },
-    "devDependencies": {
-        "jasmine-node": "*",
-        "underscore": "*"
-    },
-    "browserify": {
-    },
-    "browser": {
-        "compose.io": "./index.js",
-        "utils/List": "./utils/List.js",
-        "client": "./client.js",
-        "WebObject": "./WebObject.js",
-        "ServiceObject": "./ServiceObject.js",
-        "platforms/stomp/browser": "./platforms/stomp/browser.js",
-        "platforms/mqtt/browser": "./platforms/mqtt/browser.js",
-        "platforms/http/browser": "./platforms/http/browser.js",
-        "stompjs": "./vendors/stompjs/stomp.min.js"
-    }
+  "name": "compose.io",
+  "description": "Set of functionalities to handle COMPOSE Service Objects",
+  "version": "0.4.0",
+  "homepage": "https://github.com/compose-eu/Appcelerator",
+  "author": "Luca Capra",
+  "license": "Apache 2",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "jasmine-node test/spec/  --captureExceptions",
+    "jsdoc": "jsdoc ./ -c=jsdoc.json -l -r"
+  },
+  "keywords": [
+    "compose",
+    "service-object",
+    "IoT"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/compose-eu/Appcelerator.git"
+  },
+  "dependencies": {
+    "bluebird": "*",
+    "mqtt": "*",
+    "request": "^2.55.0",
+    "stompjs": "*"
+  },
+  "devDependencies": {
+    "jasmine-node": "*",
+    "underscore": "*"
+  },
+  "browserify": {},
+  "browser": {
+    "compose.io": "./index.js",
+    "utils/List": "./utils/List.js",
+    "client": "./client.js",
+    "WebObject": "./WebObject.js",
+    "ServiceObject": "./ServiceObject.js",
+    "platforms/stomp/browser": "./platforms/stomp/browser.js",
+    "platforms/mqtt/browser": "./platforms/mqtt/browser.js",
+    "platforms/http/browser": "./platforms/http/browser.js",
+    "stompjs": "./vendors/stompjs/stomp.min.js"
+  }
 }

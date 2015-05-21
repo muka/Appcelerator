@@ -81,10 +81,21 @@ adapter.initialize = function(compose) {
     }
 
     compose.config.stomp = compose.config.stomp || {};
+
+    var proto = compose.config.stomp.proto || 'ws';
+    var secure = compose.config.stomp.secure;
+
+    if(proto) {
+        secure = proto === "wss";
+    }
+
+    var port  = compose.config.stomp.port || (secure ? 61624 : 61623);
+    proto = secure ? "wss" : "ws";
+
     var stompConf = {
-        proto: compose.config.stomp.secure ? 'wss' : 'ws',
+        proto: proto,
         host: host || "api.servioticy.com",
-        port: compose.config.stomp.port || "61623",
+        port: port,
         user: compose.config.stomp.user || "compose",
         password: compose.config.stomp.password || "shines"
     };

@@ -21,7 +21,8 @@ limitations under the License.
 var DEBUG = false;
 var d = function(m) { DEBUG && console.log(m); };
 
-var http = require("http");
+
+var request = require("request")
 var parseUrl = require("url").parse;
 
 var adapter = module.exports;
@@ -39,7 +40,25 @@ adapter.initialize = function(compose) {
      */
     adapter.request = function(handler) {
 
-        var params = parseUrl(compose.config.url + handler.path);
+
+        var httpConf = compose.config.http || {};
+
+        // allow self-signed certs by defaults
+        httpConf.secure = httpConf.secure === undefined ?
+                            false : httpConf.secure;
+
+        var uri = parseUrl(compose.config.url + handler.path);
+
+        var params = {};
+
+        if(!httpConf.secure) {
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+        }
+
+        params.rejectUnhauthorized = httpConf.secure;
+
+        params.uri = uri;
+
         params.headers = {
             "Cache-Control": "no-cache",
             "Authorization": compose.config.apiKey
@@ -49,6 +68,18 @@ adapter.initialize = function(compose) {
             params.headers["Content-Type"] = "application/json";
         }
 
+        var body = null;
+        if(handler.body) {
+
+            body = handler.body;
+            if(typeof body !== 'string') {
+                body = JSON.stringify(body);
+            }
+
+            d("[node client] Req. body " + body);
+        }
+
+        params.body = body;
         params.method = handler.method;
 
         if(DEBUG) {
@@ -56,36 +87,31 @@ adapter.initialize = function(compose) {
 //            d('Params:'); d(JSON.stringify(params));
         }
 
-        var req = http.request(params, function(res) {
+        request(params, function(err, res, body) {
 
-            var data = '';
-            res.on('data', function(chunk) {
-                data += chunk;
-            });
+            if(err) {
 
-            res.on('end', function() {
-                d("[node client] Completed request, status code " + res.statusCode);
-                if(res.statusCode >= 400) {
-                    handler.emitter.trigger('error', data ? data : {
-                        code: res.statusCode
-                    });
+                d("[node client] Request error");
+                handler.emitter.trigger('error', err);
+
+                return;
+            }
+
+            d("[node client] Completed request, status code " + res.statusCode);
+            if(res.statusCode >= 400) {
+                handler.emitter.trigger('error', body ? body : {
+                    code: res.statusCode
+                });
+            }
+            else {
+
+                if(!body) {
+                    body = null;
                 }
-                else {
 
+                if(typeof body === 'string'){
                     try {
-
-                        if(!data){
-                            data = null;
-                        }
-
-                        if(typeof data === 'string'){
-                            try {
-                                data = JSON.parse(data);
-                            }
-                            catch(e) {}
-                        }
-
-                        handler.emitter.trigger('success', data);
+                        body = JSON.parse(body);
                     }
                     catch(e) {
 
@@ -95,26 +121,13 @@ adapter.initialize = function(compose) {
                         handler.emitter.trigger('error', e);
                     }
                 }
-            });
 
-        });
+                handler.emitter.trigger('success', body);
 
-        req.on('error', function(e) {
-            d("[node client] Request error");
-            handler.emitter.trigger('error', e);
-        });
-
-        if(handler.body) {
-            var body = handler.body;
-            if(typeof body !== 'string') {
-                body = JSON.stringify(body);
             }
 
-            d("[node client] Req. body " + body);
-            req.write(body);
-        }
+        });
 
-        req.end();
         d("[node client] Sent request");
 
     };
