@@ -82,7 +82,7 @@ adapter.initialize = function(compose) {
 
     compose.config.stomp = compose.config.stomp || {};
 
-    var proto = compose.config.stomp.proto || 'ws';
+    var proto = compose.config.stomp.proto || null;
     var secure = compose.config.stomp.secure;
 
     if(proto) {

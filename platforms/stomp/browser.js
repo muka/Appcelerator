@@ -72,7 +72,8 @@ adapter.initialize = function(compose) {
     }
 
     var ApiTokenKey = compose.config.apiKeyToken;
-    var proto = compose.config.stomp.proto || 'ws';
+
+    var proto = compose.config.stomp.proto || null;
     var secure = compose.config.stomp.secure;
 
     if(proto) {
