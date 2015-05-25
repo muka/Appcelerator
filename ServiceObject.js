@@ -87,7 +87,11 @@ solib.setup = function(compose) {
                             +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
             so.getClient().post(url, me.toJson(), function(data) {
-
+                
+                if(!data.id) {
+                    throw new ComposeError("Error creating subscription on stream " + me.container().name);
+                }
+                
                 me.id = data.id;
                 me.created = data.id;
 
@@ -1473,13 +1477,12 @@ solib.setup = function(compose) {
             if(!me.id) {
                 throw new ComposeError("Missing ServiceObject id.");
             }
-            me.getClient().get('/'+me.id, null, function(data) {
 
+            me.getClient().get('/'+me.id, null, function(data) {
                 if(data) {
                     me.initialize(data);
                 }
                 resolve && resolve(me);
-
             }, reject);
         }).bind(me);
     };

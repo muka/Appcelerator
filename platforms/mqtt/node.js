@@ -53,6 +53,11 @@ var parseResponseContent = function(message) {
 
     response.body = parts[1] ? JSON.parse(parts[1]) : {};
 
+    if(response.body.meta) {
+        response.meta = response.body.meta;
+        response.body = response.body.body;
+    }
+
 //    /**
 //     * @deprecated Ensure to fix this code once the bridge is stable
 //     * */
@@ -158,7 +163,7 @@ adapter.initialize = function(compose) {
 
             client.on('connect', function() {
 
-                d('Connected')
+                d('Connected');
                 handler.emitter.trigger('connect', client);
 
                 client.subscribe(topics.to, function(err, granted) {
@@ -171,6 +176,9 @@ adapter.initialize = function(compose) {
 
                         if(topic === topics.to) {
                             d("New message for topic.to");
+                            
+//                            console.log("#### mqtt message", message.toString());
+                            
                             var resp = parseResponseContent(message);
                             queue.handleResponse(resp);
                         }
@@ -214,8 +222,10 @@ adapter.initialize = function(compose) {
         else {
             delete request.body;
         }
-
+        
         request.meta.messageId = queue.add(handler);
+
+//        console.log("#### mqtt request body", request);
 
         // 3rd arg has qos option { qos: 0|1|2 }
         // @todo check which one fit better in this case
