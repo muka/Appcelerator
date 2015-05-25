@@ -1,7 +1,7 @@
 {
   "name": "compose.io",
   "main": "build/browser/compose.js",
-  "version": "0.6.11",
+  "version": "0.6.12",
   "homepage": "https://github.com/muka/Appcelerator",
   "authors": [
     "Luca Capra <luca.capra@create-net.com>"

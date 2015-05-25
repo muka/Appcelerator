@@ -1178,6 +1178,18 @@ client.setup = function(compose) {
             }
         };
 
+        // try-catch will be not optimized
+        var parseJson = function(c) {
+            try {
+                return JSON.parse(c);
+            }
+            catch (e) {
+                console.error("Error reading JSON response", e);
+            }
+
+            return null;
+        };
+
         /**
          * Normalize the returned body
          *
@@ -1185,8 +1197,12 @@ client.setup = function(compose) {
          * */
         this.normalizeBody = function(message) {
 
-            if(typeof message.body === 'string') {
-                message.body = JSON.parse(message.body);
+            if(typeof message === 'string') {
+                message = parseJson(message);
+            }
+            
+            if(message.body && typeof message.body === 'string') {
+                message.body = parseJson(message.body);
             }
 
             if(message.body && message.body.messageId !== undefined) {
@@ -1206,31 +1222,13 @@ client.setup = function(compose) {
             if(message.headers && message.headers.messageId !== undefined) {
                 message.messageId = message.headers.messageId;
             }
-
+            
+            return message;
         };
-
-        // performance hack, this will be not optimized
-        var parseJson = function(c) {
-            try {
-                return JSON.parse(c);
-            }
-            catch (e) {
-                console.error("Error reading JSON response", e);
-            }
-
-            return null;
-        };
-
 
         this.handleResponse = function(message, raw) {
 
-            var response;
-            if(typeof message === 'object') {
-                response = message;
-            }
-            else if(typeof message === 'string') {
-                response = parseJson(message);
-            }
+            var response = this.normalizeBody(message);
 
             // uhu?!
             if(!response) {
@@ -1239,15 +1237,13 @@ client.setup = function(compose) {
                 return;
             }
 
-            this.normalizeBody(response);
-
             var errorResponse = this.isErrorResponse(response.body);
             if(response.messageId) {
 
                 var handler = this.get(response.messageId);
 
                 if(handler) {
-
+                    
                     if(errorResponse) {
                         handler.emitter.trigger('error', response.body);
                     }
@@ -2085,7 +2081,11 @@ solib.setup = function(compose) {
                             +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
             so.getClient().post(url, me.toJson(), function(data) {
-
+                
+                if(!data.id) {
+                    throw new ComposeError("Error creating subscription on stream " + me.container().name);
+                }
+                
                 me.id = data.id;
                 me.created = data.id;
 
@@ -3471,13 +3471,12 @@ solib.setup = function(compose) {
             if(!me.id) {
                 throw new ComposeError("Missing ServiceObject id.");
             }
-            me.getClient().get('/'+me.id, null, function(data) {
 
+            me.getClient().get('/'+me.id, null, function(data) {
                 if(data) {
                     me.initialize(data);
                 }
                 resolve && resolve(me);
-
             }, reject);
         }).bind(me);
     };
