@@ -1600,12 +1600,40 @@ solib.setup = function(compose) {
     /**
      * Retrieve all the Service Objects from a given user (identified by the Authorization header).
      *
-     * @return {ServiceObject} Self reference
+     * @return {Promise}
      */
     solib.list = function() {
         var client = solib.client();
         return new Promise(function(resolve, reject) {
             client.get('/', null, function(data) {
+                client.ServiceObject = null;
+                var json = typeof data === 'string' ? JSON.parse(data) : data;
+                resolve(json);
+            }, reject);
+        }).bind(client);
+    };
+
+    /**
+     * Search for Service Objects.
+     * Example parameters:
+     * 1) free-form query: { query: "some params" }
+     * 2) field params: 
+     * {
+     *   name: "Object Name",
+     *   description: "optional description"
+     *   customFields: {
+     *      param1: "value"
+     *   }
+     * }
+     * 
+     * 
+     * @params Object search parameters
+     * @return {Promise}
+     */
+    solib.search = function(params) {
+        var client = solib.client();
+        return new Promise(function(resolve, reject) {
+            client.post('/search', params, function(data) {
                 client.ServiceObject = null;
                 var json = typeof data === 'string' ? JSON.parse(data) : data;
                 resolve(json);

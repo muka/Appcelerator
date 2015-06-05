@@ -280,6 +280,7 @@ var Compose = function(config) {
     compose.delete = compose.lib.ServiceObject.delete;
     compose.create = compose.lib.ServiceObject.create;
     compose.list = compose.lib.ServiceObject.list;
+    compose.search = compose.lib.ServiceObject.search;
 
     if(compose.config.debug) {
         if(!_longStackTraces && !compose.config.platform.titanium) {
