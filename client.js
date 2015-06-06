@@ -417,7 +417,7 @@ client.setup = function(compose) {
                 d(response);
                 return;
             }
-
+            
             var errorResponse = this.isErrorResponse(response.body);
             if(response.messageId) {
 

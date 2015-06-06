@@ -139,7 +139,7 @@ wolib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    StreamList.prototype.toJson = function(asString) {
+    StreamList.prototype.toJson = StreamList.prototype.toJSON = function(asString) {
 
         var list = this.getList();
         var json = copyVal(list);
@@ -253,7 +253,7 @@ wolib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Stream.prototype.toJson = function(asString) {
+    Stream.prototype.toJson = Stream.prototype.toJSON = function(asString) {
 
         var json = {};
 
@@ -431,7 +431,7 @@ wolib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    WebObject.prototype.toJson = function(asString) {
+    WebObject.prototype.toJson = WebObject.prototype.toJSON = function(asString) {
         var json = {};
 
         for (var i in this) {

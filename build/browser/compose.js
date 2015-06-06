@@ -650,7 +650,7 @@ listlib.setup = function(compose) {
         return this;
     };
 
-    ArrayList.prototype.toJson = function(asString) {
+    ArrayList.prototype.toJson = ArrayList.prototype.toJSON = function(asString) {
 
         var list;
 //            list = copyVal(this.getList());
@@ -1242,7 +1242,7 @@ client.setup = function(compose) {
                 d(response);
                 return;
             }
-
+            
             var errorResponse = this.isErrorResponse(response.body);
             if(response.messageId) {
 
@@ -1641,7 +1641,7 @@ wolib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    StreamList.prototype.toJson = function(asString) {
+    StreamList.prototype.toJson = StreamList.prototype.toJSON = function(asString) {
 
         var list = this.getList();
         var json = copyVal(list);
@@ -1755,7 +1755,7 @@ wolib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Stream.prototype.toJson = function(asString) {
+    Stream.prototype.toJson = Stream.prototype.toJSON = function(asString) {
 
         var json = {};
 
@@ -1933,7 +1933,7 @@ wolib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    WebObject.prototype.toJson = function(asString) {
+    WebObject.prototype.toJson = WebObject.prototype.toJSON = function(asString) {
         var json = {};
 
         for (var i in this) {
@@ -2062,7 +2062,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Subscription.prototype.toJson = function(asString) {
+    Subscription.prototype.toJson = Subscription.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this);
         return asString ? JSON.stringify(json) : json;
     };
@@ -2086,7 +2086,7 @@ solib.setup = function(compose) {
             var url = '/'+so.id+'/streams/'+ me.container().name
                             +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
-            so.getClient().post(url, me.toJson(), function(data) {
+            so.getClient().post(url, me.toJSON(), function(data) {
                 
                 if(!data.id) {
                     throw new ComposeError("Error creating subscription on stream " + me.container().name);
@@ -2116,7 +2116,7 @@ solib.setup = function(compose) {
             }
 
             var url = '/subscriptions/'+ me.id;
-            so.getClient().put(url, me.toJson(), function(data) {
+            so.getClient().put(url, me.toJSON(), function(data) {
                 resolve(data);
             }, reject);
         }).bind(so);
@@ -2225,7 +2225,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Actuation.prototype.toJson = function(asString) {
+    Actuation.prototype.toJson = Actuation.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this);
         return asString ? JSON.stringify(json) : json;
     };
@@ -2335,7 +2335,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    ActuationList.prototype.toJson = function(asString) {
+    ActuationList.prototype.toJson = ActuationList.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this.getList());
         return asString ? JSON.stringify(json) : json;
     };
@@ -2479,7 +2479,7 @@ solib.setup = function(compose) {
             };
 
             // returns a simple js object with key-value pairs of data
-            data.asObject = function() {
+            data.asObject = data.toJson = data.toJSON = function() {
 
                 var res = {};
                 for(var i in data.channels) {
@@ -3446,7 +3446,7 @@ solib.setup = function(compose) {
         var me = this;
         return new Promise(function(resolve, reject) {
 
-            me.getClient().post('/', me.toJson(), function(data) {
+            me.getClient().post('/', me.toJSON(), function(data) {
                 if(data) {
                     // set internal reference to soId and createdAt
                     me.id = data.id;
@@ -3559,7 +3559,7 @@ solib.setup = function(compose) {
     solib.create = function(wo) {
 
         if(wo instanceof compose.WebObject) {
-            wo = wo.toJson();
+            wo = wo.toJSON();
         }
 
         var so = new ServiceObject(wo);
@@ -3703,8 +3703,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ******************************************************************************/
 
-var client = null;
-var ws = null;
+
+window.$$ComposeStompClient = window.$$ComposeStompClient || { ws: null, client: null };
+
+var ws = function(val) {
+    if(val !== undefined) {
+        window.$$ComposeStompClient.ws = val;
+    }
+    return window.$$ComposeStompClient.ws;
+};
+
+var client = function(val) {
+    if(val !== undefined) {
+        window.$$ComposeStompClient.client = val;
+    }
+    return window.$$ComposeStompClient.client;
+};
 
 var reconnectTimes = 5;
 var tries = reconnectTimes;
@@ -3819,11 +3833,15 @@ adapter.initialize = function(compose) {
         // 3 closed
 
         var needConnection = function() {
+            
+            if(!ws()) {
+                return true;
+            }
 
             if(client) {
-
-                d("WS state " + ws.readyState);
-                switch(ws.readyState) {
+                
+                d("WS state " + ws().readyState);
+                switch(ws().readyState) {
                     case 0:
 
                         d("[ws client] WS is connecting");
@@ -3844,7 +3862,7 @@ adapter.initialize = function(compose) {
                     case 3:
 
                         d("[ws client] WS is closed or closing");
-                        ws = null;
+                        ws(null);
 
                         break;
                 }
@@ -3864,39 +3882,14 @@ adapter.initialize = function(compose) {
             d("Connecting to stomp server " +
                     stompConf.proto +'://'+ stompConf.host + ':' + stompConf.port + stompConf.path);
 
-            ws = new WebSocket(stompConf.proto + "://" + stompConf.host + ":" + stompConf.port);
+            var _websocket = new WebSocket(stompConf.proto + "://" + stompConf.host + ":" + stompConf.port);
+            ws(_websocket);
 
-//                client.onerror = function(e) {
-//
-//                    // @TODO: test properly the reconnection beahvior!
-//                    if(ws) {
-//
-//                        if(ws.readyState >= 2 && tries < reconnectTimes){
-//                            d("[ws client] Connection lost, try reconnect");
-//                            tries--;
-//                            adapter.connect(handler, connectionSuccess, connectionFail);
-//                            return;
-//                        }
-//
-//                        if(ws.readyState < 2) {
-//                            d(e);
-//                            handler.emitter.trigger("error", { message: "Websocket error", data: e })
-//                            return;
-//                        }
-//                    }
-//
-//                    d("[ws client] Connection error");
-//                    tries = reconnectTimes;
-//                };
-//                ws.onopen = function() {
-//                    tries = reconnectTimes;
-//                };
+            client(Stomp.over(ws()));
 
-            client = Stomp.over(ws);
+            client().debug = d;
 
-            client.debug = d;
-
-            client.connect({
+            client().connect({
                     login: stompConf.user,
                     passcode: stompConf.password
                 },
@@ -3905,8 +3898,13 @@ adapter.initialize = function(compose) {
                     handler.emitter.trigger('connect', client);
 
                     d("Subscribe to " + topics.to);
-                    client.subscribe(topics.to, function(message) {
+                    client().subscribe(topics.to, function(raw) {
+                        
                         d("New message from topic " + topics.to);
+                        
+                        var message = JSON.parse(raw.body);
+                        message.messageId = raw.headers.messageId;
+                        
                         queue.handleResponse(message);
                     });
 
@@ -3929,7 +3927,7 @@ adapter.initialize = function(compose) {
     };
 
     adapter.disconnect = function() {
-        client.close();
+        client().close();
     };
 
     /*
@@ -3961,7 +3959,7 @@ adapter.initialize = function(compose) {
         };
 
         d("Sending message..");
-        client.send(topics.from, ropts, JSON.stringify(request));
+        client().send(topics.from, ropts, JSON.stringify(request));
 
     };
 
@@ -3978,9 +3976,15 @@ adapter.initialize = function(compose) {
         var uuid = queue.registerSubscription(topic, handler);
 
         d("[stomp client] Listening to " + topic);
-        client.subscribe(topic, function(message) {
+        client().subscribe(topic, function(raw) {
+            
             d("[stomp client] New message from topic " + topic);
-            message.messageId = uuid;
+            
+            var message = {
+                body: JSON.parse(raw.body),
+                messageId: uuid
+            };
+
             queue.handleResponse(message);
         });
     };

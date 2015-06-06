@@ -237,7 +237,7 @@ listlib.setup = function(compose) {
         return this;
     };
 
-    ArrayList.prototype.toJson = function(asString) {
+    ArrayList.prototype.toJson = ArrayList.prototype.toJSON = function(asString) {
 
         var list;
 //            list = copyVal(this.getList());

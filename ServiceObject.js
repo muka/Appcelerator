@@ -62,7 +62,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Subscription.prototype.toJson = function(asString) {
+    Subscription.prototype.toJson = Subscription.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this);
         return asString ? JSON.stringify(json) : json;
     };
@@ -86,7 +86,7 @@ solib.setup = function(compose) {
             var url = '/'+so.id+'/streams/'+ me.container().name
                             +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
-            so.getClient().post(url, me.toJson(), function(data) {
+            so.getClient().post(url, me.toJSON(), function(data) {
                 
                 if(!data.id) {
                     throw new ComposeError("Error creating subscription on stream " + me.container().name);
@@ -116,7 +116,7 @@ solib.setup = function(compose) {
             }
 
             var url = '/subscriptions/'+ me.id;
-            so.getClient().put(url, me.toJson(), function(data) {
+            so.getClient().put(url, me.toJSON(), function(data) {
                 resolve(data);
             }, reject);
         }).bind(so);
@@ -225,7 +225,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Actuation.prototype.toJson = function(asString) {
+    Actuation.prototype.toJson = Actuation.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this);
         return asString ? JSON.stringify(json) : json;
     };
@@ -335,7 +335,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    ActuationList.prototype.toJson = function(asString) {
+    ActuationList.prototype.toJson = ActuationList.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this.getList());
         return asString ? JSON.stringify(json) : json;
     };
@@ -479,7 +479,7 @@ solib.setup = function(compose) {
             };
 
             // returns a simple js object with key-value pairs of data
-            data.asObject = function() {
+            data.asObject = data.toJson = data.toJSON = function() {
 
                 var res = {};
                 for(var i in data.channels) {
@@ -1446,7 +1446,7 @@ solib.setup = function(compose) {
         var me = this;
         return new Promise(function(resolve, reject) {
 
-            me.getClient().post('/', me.toJson(), function(data) {
+            me.getClient().post('/', me.toJSON(), function(data) {
                 if(data) {
                     // set internal reference to soId and createdAt
                     me.id = data.id;
@@ -1559,7 +1559,7 @@ solib.setup = function(compose) {
     solib.create = function(wo) {
 
         if(wo instanceof compose.WebObject) {
-            wo = wo.toJson();
+            wo = wo.toJSON();
         }
 
         var so = new ServiceObject(wo);
