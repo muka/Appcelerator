@@ -17,8 +17,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ******************************************************************************/
 
-var client = null;
-var ws = null;
+
+window.$$ComposeStompClient = window.$$ComposeStompClient || { ws: null, client: null };
+
+var ws = function(val) {
+    if(val !== undefined) {
+        window.$$ComposeStompClient.ws = val;
+    }
+    return window.$$ComposeStompClient.ws;
+};
+
+var client = function(val) {
+    if(val !== undefined) {
+        window.$$ComposeStompClient.client = val;
+    }
+    return window.$$ComposeStompClient.client;
+};
 
 var reconnectTimes = 5;
 var tries = reconnectTimes;
@@ -133,11 +147,15 @@ adapter.initialize = function(compose) {
         // 3 closed
 
         var needConnection = function() {
+            
+            if(!ws()) {
+                return true;
+            }
 
             if(client) {
-
-                d("WS state " + ws.readyState);
-                switch(ws.readyState) {
+                
+                d("WS state " + ws().readyState);
+                switch(ws().readyState) {
                     case 0:
 
                         d("[ws client] WS is connecting");
@@ -158,7 +176,7 @@ adapter.initialize = function(compose) {
                     case 3:
 
                         d("[ws client] WS is closed or closing");
-                        ws = null;
+                        ws(null);
 
                         break;
                 }
@@ -178,39 +196,14 @@ adapter.initialize = function(compose) {
             d("Connecting to stomp server " +
                     stompConf.proto +'://'+ stompConf.host + ':' + stompConf.port + stompConf.path);
 
-            ws = new WebSocket(stompConf.proto + "://" + stompConf.host + ":" + stompConf.port);
+            var _websocket = new WebSocket(stompConf.proto + "://" + stompConf.host + ":" + stompConf.port);
+            ws(_websocket);
 
-//                client.onerror = function(e) {
-//
-//                    // @TODO: test properly the reconnection beahvior!
-//                    if(ws) {
-//
-//                        if(ws.readyState >= 2 && tries < reconnectTimes){
-//                            d("[ws client] Connection lost, try reconnect");
-//                            tries--;
-//                            adapter.connect(handler, connectionSuccess, connectionFail);
-//                            return;
-//                        }
-//
-//                        if(ws.readyState < 2) {
-//                            d(e);
-//                            handler.emitter.trigger("error", { message: "Websocket error", data: e })
-//                            return;
-//                        }
-//                    }
-//
-//                    d("[ws client] Connection error");
-//                    tries = reconnectTimes;
-//                };
-//                ws.onopen = function() {
-//                    tries = reconnectTimes;
-//                };
+            client(Stomp.over(ws()));
 
-            client = Stomp.over(ws);
+            client().debug = d;
 
-            client.debug = d;
-
-            client.connect({
+            client().connect({
                     login: stompConf.user,
                     passcode: stompConf.password
                 },
@@ -219,8 +212,13 @@ adapter.initialize = function(compose) {
                     handler.emitter.trigger('connect', client);
 
                     d("Subscribe to " + topics.to);
-                    client.subscribe(topics.to, function(message) {
+                    client().subscribe(topics.to, function(raw) {
+                        
                         d("New message from topic " + topics.to);
+                        
+                        var message = JSON.parse(raw.body);
+                        message.messageId = raw.headers.messageId;
+                        
                         queue.handleResponse(message);
                     });
 
@@ -243,7 +241,7 @@ adapter.initialize = function(compose) {
     };
 
     adapter.disconnect = function() {
-        client.close();
+        client().close();
     };
 
     /*
@@ -275,7 +273,7 @@ adapter.initialize = function(compose) {
         };
 
         d("Sending message..");
-        client.send(topics.from, ropts, JSON.stringify(request));
+        client().send(topics.from, ropts, JSON.stringify(request));
 
     };
 
@@ -292,9 +290,15 @@ adapter.initialize = function(compose) {
         var uuid = queue.registerSubscription(topic, handler);
 
         d("[stomp client] Listening to " + topic);
-        client.subscribe(topic, function(message) {
+        client().subscribe(topic, function(raw) {
+            
             d("[stomp client] New message from topic " + topic);
-            message.messageId = uuid;
+            
+            var message = {
+                body: JSON.parse(raw.body),
+                messageId: uuid
+            };
+
             queue.handleResponse(message);
         });
     };

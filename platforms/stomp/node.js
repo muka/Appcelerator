@@ -152,8 +152,11 @@ adapter.initialize = function(compose) {
                     handler.emitter.trigger('connect', client);
 
                     d("[stomp client] Subscribe to " + topics.to);
-                    client.subscribe(topics.to, function(message) {
+                    client.subscribe(topics.to, function(raw) {
+
                         d("[stomp client] New message from topic " + topics.to);
+                        var message = JSON.parse(raw.body);
+
                         queue.handleResponse(message);
                     });
 
