@@ -2466,7 +2466,8 @@ solib.setup = function(compose) {
      */
     DataBag.prototype.get = function(index, channel, defaultValue) {
 
-        if(arguments[0]*1 !== arguments[0]) {
+        // BEWARE: !== doesn't work!
+        if(arguments[0]*1 != arguments[0]) {
             return this.get(this.index(), arguments[0], arguments[1]);
         }
 
@@ -2474,6 +2475,7 @@ solib.setup = function(compose) {
 
         var list = this.getList();
         var data = list[index];
+        
         if(data) {
 
             var channels = data.channels;
@@ -2509,7 +2511,7 @@ solib.setup = function(compose) {
                         res.channels[_i] =  data.channels[_i]['current-value'];
                     })(i);
                 }
-
+                
                 return res;
             };
 
@@ -2527,7 +2529,7 @@ solib.setup = function(compose) {
             getList: function() { return me.getList(); },
             forEach: function(fn) {
                 me.forEach(function(el, i) {
-                    fn.call(me, me.get(i), i);
+                    fn.apply(me, [me.get(i), i]);
                 });
             }
         };
