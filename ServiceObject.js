@@ -482,10 +482,14 @@ solib.setup = function(compose) {
             // returns a simple js object with key-value pairs of data
             data.asObject = data.toJson = data.toJSON = function() {
 
-                var res = {};
+                var res = {
+                    channels: {},
+                    lastUpdate: data.lastUpdate
+                };
+
                 for(var i in data.channels) {
                     (function(_i) {
-                        res[_i] =  data.channels[_i]['current-value'];
+                        res.channels[_i] =  data.channels[_i]['current-value'];
                     })(i);
                 }
 
@@ -496,6 +500,22 @@ solib.setup = function(compose) {
         }
 
         return null;
+    };
+
+    DataBag.prototype.toJson = DataBag.prototype.toJSON = function(asString) {
+        
+        var me = this;
+        
+        var obj = {
+            getList: function() { return me.getList(); },
+            forEach: function(fn) {
+                me.forEach(function(el, i) {
+                    fn.call(me, me.get(i), i);
+                });
+            }
+        };
+        
+        return compose.util.List.Enumerable.prototype.toJSON.call(obj, asString);
     };
 
     /**

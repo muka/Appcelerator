@@ -146,8 +146,26 @@ listlib.setup = function(compose) {
         }
     };
 
-    Enumerable.prototype.toJSON = function() {
-        return this.getList();
+    Enumerable.prototype.toJson = 
+    Enumerable.prototype.toJSON = function(asString) {
+        
+        var isArray = this.getList() instanceof Array;
+        var res = isArray ? [] : {};
+
+        this.forEach(function(el, i) {
+            
+            var val = el.toJSON ? el.toJSON() : el;
+
+            if(isArray) {
+                res.push(val);
+                return;
+            }
+            
+            res[ i ] = val;
+
+        });
+
+        return asString ? JSON.stringify(res) : res;
     };
 
     /**
@@ -241,17 +259,17 @@ listlib.setup = function(compose) {
         return this;
     };
 
-    ArrayList.prototype.toJson = ArrayList.prototype.toJSON = function(asString) {
-
-        var list;
-//            list = copyVal(this.getList());
-        list = this.getList();
-
-        return asString ? JSON.stringify(list) : list;
-    };
+//    ArrayList.prototype.toJson = ArrayList.prototype.toJSON = function(asString) {
+//
+//        var list;
+////            list = copyVal(this.getList());
+//        list = this.getList();
+//
+//        return asString ? JSON.stringify(list) : list;
+//    };
 
     ArrayList.prototype.toString = function() {
-        return this.toJson(true);
+        return this.toJSON(true);
     };
 
     ArrayList.prototype.initialize = function(obj) {
