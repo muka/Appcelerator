@@ -554,6 +554,10 @@ listlib.setup = function(compose) {
         }
     };
 
+    Enumerable.prototype.toJSON = function() {
+        return this.getList();
+    };
+
     /**
      * Handles array as a list
      *
@@ -2057,7 +2061,8 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Subscription.prototype.toJson = Subscription.prototype.toJSON = function(asString) {
+    Subscription.prototype.toJson = 
+    Subscription.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this);
         return asString ? JSON.stringify(json) : json;
     };
@@ -2959,8 +2964,9 @@ solib.setup = function(compose) {
                         throw new ComposeError("The value " + val + " for `" + label
                                                     + "` cannot be parsed as a valid date");
                     }
-
-                    return date.getTime();
+                    
+                    // convert to seconds
+                    return Math.round(date.getTime()/1000);
                 };
 
                 if(hasFrom) {

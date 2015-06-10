@@ -146,6 +146,10 @@ listlib.setup = function(compose) {
         }
     };
 
+    Enumerable.prototype.toJSON = function() {
+        return this.getList();
+    };
+
     /**
      * Handles array as a list
      *
