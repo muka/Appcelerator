@@ -554,8 +554,26 @@ listlib.setup = function(compose) {
         }
     };
 
-    Enumerable.prototype.toJSON = function() {
-        return this.getList();
+    Enumerable.prototype.toJson = 
+    Enumerable.prototype.toJSON = function(asString) {
+        
+        var isArray = this.getList() instanceof Array;
+        var res = isArray ? [] : {};
+
+        this.forEach(function(el, i) {
+            
+            var val = el.toJSON ? el.toJSON() : el;
+
+            if(isArray) {
+                res.push(val);
+                return;
+            }
+            
+            res[ i ] = val;
+
+        });
+
+        return asString ? JSON.stringify(res) : res;
     };
 
     /**
@@ -649,17 +667,17 @@ listlib.setup = function(compose) {
         return this;
     };
 
-    ArrayList.prototype.toJson = ArrayList.prototype.toJSON = function(asString) {
-
-        var list;
-//            list = copyVal(this.getList());
-        list = this.getList();
-
-        return asString ? JSON.stringify(list) : list;
-    };
+//    ArrayList.prototype.toJson = ArrayList.prototype.toJSON = function(asString) {
+//
+//        var list;
+////            list = copyVal(this.getList());
+//        list = this.getList();
+//
+//        return asString ? JSON.stringify(list) : list;
+//    };
 
     ArrayList.prototype.toString = function() {
-        return this.toJson(true);
+        return this.toJSON(true);
     };
 
     ArrayList.prototype.initialize = function(obj) {
@@ -2481,10 +2499,14 @@ solib.setup = function(compose) {
             // returns a simple js object with key-value pairs of data
             data.asObject = data.toJson = data.toJSON = function() {
 
-                var res = {};
+                var res = {
+                    channels: {},
+                    lastUpdate: data.lastUpdate
+                };
+
                 for(var i in data.channels) {
                     (function(_i) {
-                        res[_i] =  data.channels[_i]['current-value'];
+                        res.channels[_i] =  data.channels[_i]['current-value'];
                     })(i);
                 }
 
@@ -2495,6 +2517,22 @@ solib.setup = function(compose) {
         }
 
         return null;
+    };
+
+    DataBag.prototype.toJson = DataBag.prototype.toJSON = function(asString) {
+        
+        var me = this;
+        
+        var obj = {
+            getList: function() { return me.getList(); },
+            forEach: function(fn) {
+                me.forEach(function(el, i) {
+                    fn.call(me, me.get(i), i);
+                });
+            }
+        };
+        
+        return compose.util.List.Enumerable.prototype.toJSON.call(obj, asString);
     };
 
     /**
