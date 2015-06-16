@@ -16,6 +16,7 @@ compose.io is the [COMPOSE] JavaScript library designed to be used with [Titaniu
 - [Library configuration](#library-configuration)
 - [Example usage](#example-usage)
     - [List all Service Objects](#list-all-service-objects)
+    - [Search for Service Objects](#search-for-service-objects)
     - [Create a Service Object](#create-a-service-object)
     - [Load a Service Object definition](#load-a-service-object-definition)
     - [Sending data update](#sending-data-update)
@@ -210,6 +211,29 @@ api.list().map(api.delete).then(function() {
 })
 // .catch(fn).finally(fn)
 ;
+```
+
+##Search for Service Objects
+
+
+```
+
+// at least one option is required, multiple option will be AND-ed together
+
+var params = {
+  query: "*berry", // Free-textquery, use * fro wildcard
+  name: "drone", // match any title containing `drone` work
+  description: "drone",
+  customFields: {
+     model: "a4b2788"
+  }
+};
+
+api.search().then(function(list) {
+    console.log("Found " + list.length);
+})
+// .catch(fn).finally(fn)
+
 ```
 
 ##Create a Service Object

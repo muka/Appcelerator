@@ -52,24 +52,19 @@ var parseResponseContent = function(message) {
     }
 
     response.body = parts[1] ? JSON.parse(parts[1]) : {};
-
+    
+    if(typeof response.body.body === 'string') {
+        response.body.body = JSON.parse(response.body.body);
+    }
+    
     if(response.body.meta) {
         response.meta = response.body.meta;
+    }
+    
+    if(response.body.body) {
         response.body = response.body.body;
     }
-
-//    /**
-//     * @deprecated Ensure to fix this code once the bridge is stable
-//     * */
-//    // @TODO see if it is possible to move messageId outside the body
-//    if(typeof response.body.messageId !== 'undefined') {
-//        response.messageId = response.body.messageId;
-//        delete response.body.messageId;
-//    }
-//    if(message.headers && typeof message.headers.messageId !== 'undefined') {
-//        message.messageId = message.headers.messageId;
-//    }
-
+    
     return response;
 };
 
@@ -176,8 +171,6 @@ adapter.initialize = function(compose) {
 
                         if(topic === topics.to) {
                             d("New message for topic.to");
-                            
-//                            console.log("#### mqtt message", message.toString());
                             
                             var resp = parseResponseContent(message);
                             queue.handleResponse(resp);

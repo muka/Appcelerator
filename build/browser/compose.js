@@ -263,7 +263,6 @@ var Compose = function(config) {
                 + " is not supported in " + compose.config.platform.name);
     }
 
-
     compose.config.apiKeyToken = compose.config.apiKey.replace('Bearer ', '');
 
     compose.lib.Promise = compose.util.require('bluebird');
@@ -300,8 +299,13 @@ var Compose = function(config) {
 
 };
 
-Compose.prototype.require = function(m) {
+Compose.require = Compose.prototype.require = function(m) {
     return require(m);
+};
+
+Compose.setup = function(conf) {
+    var api = new Compose(conf);
+    return api.lib.Promise.resolve(api);
 };
 
 module.exports = Compose;
