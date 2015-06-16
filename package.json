@@ -1,5 +1,6 @@
 {
   "name": "compose.io",
+  "version": "0.7.2",
   "description": "Set of functionalities to handle COMPOSE Service Objects",
   "homepage": "https://github.com/compose-eu/Appcelerator",
   "author": "Luca Capra",
