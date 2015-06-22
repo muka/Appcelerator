@@ -416,6 +416,19 @@ listlib.setup = function(compose) {
     };
 
 
+    /**
+     * Return an object at a specific index
+     * */
+    ObjectList.prototype.at = function(i) {
+        var list = this.getList();
+        var c = 0;
+        for(var k in list) {
+            if(c === i) return list[k];
+            c++;
+        }
+        return null;
+    };
+
     listlib.Enumerable = Enumerable;
 
     listlib.ArrayList = ArrayList;
