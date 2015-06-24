@@ -2064,7 +2064,20 @@ solib.setup = function(compose) {
     var getApi = function() {
         return compose;
     };
-
+    
+    var buildQueryString = function(obj, prefix) {
+        
+        var qs = '';
+        var qsparts = [];
+        
+        for(var key in obj) {
+            qsparts.push(key + '=' + obj[key]);
+        }
+        
+        qs = (prefix === undefined ? '?' : prefix) + qsparts.join('&');
+        return qs;
+    };
+    
     /**
      *
      * @constructor
@@ -2837,21 +2850,34 @@ solib.setup = function(compose) {
     /**
      * Retieve data from a ServiceObject stream
      *
-     * @param {String} timeModifier  text, optional Possible values: lastUpdate, 1199192940 (time ago as timestamp)
-     * @return {Promise} Promise callback with result
+     * @param {String} timeModifier  optional, possible values: lastUpdate, 1199192940 (time ago as timestamp)
+     * @param {int} size             optional, the number of elements to return
+     * @param {int} from             optional, the first value to get from the list for paging
+     * 
+     * @return {Promise}             Promise callback with result
      */
-    Stream.prototype.pull = function(timeModifier) {
+    Stream.prototype.pull = function(timeModifier, size, from) {
 
         var me = this;
         timeModifier = timeModifier ? timeModifier : "";
-
+        
+        var qs = '';
+        if(size || from !== undefined) {
+            
+            var obj = {};
+            if(size) obj.size = size;
+            if(from !== undefined) obj.from = from;
+            
+            qs = buildQueryString(obj);
+        }
+        
         return new Promise(function(resolve, reject) {
 
             if(!me.container().id) {
                 throw new ComposeError("Missing ServiceObject id.");
             }
 
-            var url = '/' + me.container().id + '/streams/' + me.name + '/' + timeModifier;
+            var url = '/' + me.container().id + '/streams/' + me.name + '/' + timeModifier + qs;
             me.container().getClient().get(url, null, function(res) {
 
                 var data = [];
@@ -2871,10 +2897,13 @@ solib.setup = function(compose) {
     /**
      * Search data of a ServiceObject stream
      *
-     * @param {Object} options
+     * @param {Object} options      search options
+     * @param {int} size            optional, the number of elements to return
+     * @param {int} from            optional, the first value to get from the list for paging
+     * 
      * @return {Promise} Promise callback with result
      */
-    Stream.prototype.search = function(searchOptions) {
+    Stream.prototype.search = function(searchOptions, size, from) {
 
         var me = this;
 
@@ -3193,7 +3222,20 @@ solib.setup = function(compose) {
                 var params = loadParams(searchOptions);
             }
             
-            var url = '/' + me.container().id + '/streams/' + me.name + '/search';
+            
+        
+            var qs = '';
+            if(size || from !== undefined) {
+
+                var obj = {};
+                if(size) obj.size = size;
+                if(from !== undefined) obj.from = from;
+
+                qs = buildQueryString(obj);
+            }
+            
+            
+            var url = '/' + me.container().id + '/streams/' + me.name + '/search' + qs;
             me.container().getClient().post(url, params, function(res) {
 
                 var data = [];
