@@ -3620,7 +3620,7 @@ solib.setup = function(compose) {
                 throw new Error("Missing ServiceObject id.");
             }
 
-            me.getClient().put('/'+ me.id, me.toString(), function(data) {
+            me.getClient().put('/'+ me.id, me.toJSON(), function(data) {
                 resolve && resolve(me);
             }, error);
         });
