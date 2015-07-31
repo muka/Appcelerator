@@ -1451,14 +1451,40 @@ client.setup = function(compose) {
         return false;
     };
 
-    Client.prototype.request = function(method, path, body, success, error) {
-
-        var me = this;
-        me.requestHandler.setConf({
+    Client.prototype.request = function(method, path, body, success, error, headers) {
+        
+        var reqconf = {
             method: method,
             path: path,
-            body: body
-        });
+            body: body,
+            headers: headers || null
+        };
+        
+        var params;
+        
+        if(arguments.length === 1) {
+            params = arguments[0]
+            method = arguments[0].method
+        }
+        
+        if(arguments.length === 2) {
+            params = arguments[1]
+            reqconf.method = method
+        }
+        
+        if(params) {
+            
+            reqconf.method = params.method || reqconf.method;
+            reqconf.path = params.path;
+            reqconf.body = params.body;
+            reqconf.headers = params.headers || null;
+            
+            success = params.success;
+            error = params.error;
+        }
+        
+        var me = this;
+        me.requestHandler.setConf(reqconf);
 
         d("[client] Requesting " + this.requestHandler.method + " " + this.requestHandler.path);
 
@@ -2234,6 +2260,25 @@ solib.setup = function(compose) {
     };
 
     /**
+     * Load a subscription
+     *
+     * @return {Promise} Promise callback with result
+     */
+    SubscriptionList.prototype.load = function(id) {
+        var me = this;
+        var so = me.container().container();
+        var stream = me.container();
+        
+        return new Promise(function(resolve, reject) {
+            var url = '/subscriptions/'+ id;
+            so.getClient().get(url, null, function(data) {
+                var sub = stream.addSubscription(data)
+                resolve(sub);
+            }, reject);
+        }).bind(me.container());
+    };
+
+    /**
      * @constructor
      * */
     var Actuation = function() {
@@ -2291,15 +2336,29 @@ solib.setup = function(compose) {
     Actuation.prototype.invoke = function(body) {
         var me = this;
         return new Promise(function(resolve, reject) {
-
+            
+            body = body || ""
+            
+            var client = me.container().getClient()
             var url = '/'+ me.container().id +'/actuations/'+ me.name;
-            me.container().getClient().post(url, body.toString(), function(data) {
+            
+            client.request({
+                method: 'POST',
+                path: url,
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                data: body.toString(),
+                success: function(data) {
 
-                me.id = data.id;
-                me.createdAt = data.createdAt;
+                    me.id = data.id;
+                    me.createdAt = data.createdAt;
 
-                resolve(me);
-            }, reject);
+                    resolve(me);
+                }, 
+                error: reject   
+            })            
+
         });
     };
 
@@ -2313,10 +2372,10 @@ solib.setup = function(compose) {
 
     /**
      * Get the status of an actuation
-     *
+     * @param {mixed} newStatus optional, set a new status of the actuation
      * @return {Promise} Promise callback with result
      */
-    Actuation.prototype.status = function() {
+    Actuation.prototype.status = function(newStatus) {
         var me = this;
         return new Promise(function(resolve, reject) {
 
@@ -2325,12 +2384,28 @@ solib.setup = function(compose) {
             }
 
             var url = '/actuations/'+ me.id;
-            me.getClient().get(url, null, function(data) {
-                if(data.status === 'completed') {
-                    me.reset();
-                }
-                resolve(data.status, data);
-            }, reject);
+            var client = me.container().getClient();
+            
+            var cb = function(data) {
+//                if(data.status === 'completed') {
+//                    me.reset();
+//                }
+
+                resolve(data.status);
+            };
+
+            var is_upd = (newStatus !== undefined);
+            client.request({
+                method: is_upd ? 'put' : 'get',
+                path: url,
+                headers: {
+                    'Content-Type': is_upd ? 'text/plain' : 'application/json'
+                },
+                body: is_upd ? newStatus : null, 
+                success: cb, 
+                error: reject   
+            })
+
         });
     };
 
@@ -2348,10 +2423,10 @@ solib.setup = function(compose) {
             }
 
             var url = '/actuations/'+ me.id;
-            me.getClient().delete(url, null, function(data) {
-                if(data.status === 'cancelled') {
-                    me.reset();
-                }
+            me.container().getClient().delete(url, null, function(data) {
+//                if(data.status === 'cancelled') {
+//                    me.reset();
+//                }
                 resolve(data.status, data);
             }, reject);
         });
@@ -2407,7 +2482,7 @@ solib.setup = function(compose) {
             me.container().getClient().get(url, null, function(data) {
 
                 me.container().setActions(data.actions);
-                resolve(data.actions);
+                resolve(me.container().getActions());
 
             }, reject);
 
@@ -2595,8 +2670,8 @@ solib.setup = function(compose) {
 
         var subscriptions = new SubscriptionList(obj.subscriptions || {});
         subscriptions.container(this);
-        this.__$subscriptions = subscriptions;
 
+        this.__$subscriptions = subscriptions;
         this.__$emitter = new Emitter;
 
         return this;
@@ -2655,7 +2730,7 @@ solib.setup = function(compose) {
         if(!me.__$pubsub) {
             me.__$pubsub = {
                 callback: defaultCallback,
-                destination: compose.config.apiKey.replace('Bearer ', '')
+                destination: compose.config.apiKeyToken
             };
         }
 
@@ -2884,7 +2959,7 @@ solib.setup = function(compose) {
                 if(res && res.data) {
                     data = res.data;
                 }
-
+                
                 var dataset = new DataBag(data);
                 dataset.container(me);
 
@@ -3222,8 +3297,6 @@ solib.setup = function(compose) {
                 var params = loadParams(searchOptions);
             }
             
-            
-        
             var qs = '';
             if(size || from !== undefined) {
 
@@ -3233,7 +3306,6 @@ solib.setup = function(compose) {
 
                 qs = buildQueryString(obj);
             }
-            
             
             var url = '/' + me.container().id + '/streams/' + me.name + '/search' + qs;
             me.container().getClient().post(url, params, function(res) {
@@ -3614,7 +3686,7 @@ solib.setup = function(compose) {
             if(!me.id) {
                 throw new Error("Missing ServiceObject id.");
             }
-
+            
             me.getClient().put('/'+ me.id, me.toJSON(), function(data) {
                 resolve && resolve(me);
             }, error);

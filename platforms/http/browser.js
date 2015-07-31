@@ -60,15 +60,34 @@ httplib.initialize = function(compose) {
         };
 
         http.open(handler.method, url, true);
-        http.setRequestHeader("Content-type", "application/json");
-        http.setRequestHeader("Authorization", compose.config.apiKey);
-
-        var data = null;
-        if(handler.body) {
-            data = JSON.stringify(handler.body);
+        
+        var headers = {
+            "Content-type": "application/json",
+            "Authorization": compose.config.apiKey
+        };
+        
+        if(handler.headers) {
+            for(var key in handler.headers) {
+                headers[ key ] = handler.headers[key];
+            }
         }
 
-        http.send(data);
+        for(var key in headers) {
+            http.setRequestHeader(key, headers[ key ]);
+        }
+
+        var body = null;
+        if(handler.body) {
+
+            body = handler.body
+            if(typeof handler.body === 'object' || handler.body instanceof Array) {
+                body = JSON.stringify(body);
+            }
+
+            d("[browser client] Req. body: " + body);
+        }
+
+        http.send(body);
     };
 
 };
