@@ -592,14 +592,40 @@ client.setup = function(compose) {
         return false;
     };
 
-    Client.prototype.request = function(method, path, body, success, error) {
-
-        var me = this;
-        me.requestHandler.setConf({
+    Client.prototype.request = function(method, path, body, success, error, headers) {
+        
+        var reqconf = {
             method: method,
             path: path,
-            body: body
-        });
+            body: body,
+            headers: headers || null
+        };
+        
+        var params;
+        
+        if(arguments.length === 1) {
+            params = arguments[0]
+            method = arguments[0].method
+        }
+        
+        if(arguments.length === 2) {
+            params = arguments[1]
+            reqconf.method = method
+        }
+        
+        if(params) {
+            
+            reqconf.method = params.method || reqconf.method;
+            reqconf.path = params.path;
+            reqconf.body = params.body;
+            reqconf.headers = params.headers || null;
+            
+            success = params.success;
+            error = params.error;
+        }
+        
+        var me = this;
+        me.requestHandler.setConf(reqconf);
 
         d("[client] Requesting " + this.requestHandler.method + " " + this.requestHandler.path);
 

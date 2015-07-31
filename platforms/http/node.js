@@ -61,30 +61,34 @@ adapter.initialize = function(compose) {
 
         params.headers = {
             "Cache-Control": "no-cache",
-            "Authorization": compose.config.apiKey
+            "Authorization": compose.config.apiKey,
+            "Content-Type" : "application/json",
         };
 
-        if(typeof handler.body === 'object' || handler.body instanceof Array) {
-            params.headers["Content-Type"] = "application/json";
+        if(handler.headers) {
+            Object.keys(handler.headers).forEach(function(key) {
+                params.headers[ key ] = handler.headers[key]
+            })
         }
 
         var body = null;
         if(handler.body) {
-
-            body = handler.body;
-            if(typeof body !== 'string') {
+            
+            body = handler.body
+            
+            if(typeof handler.body === 'object' || handler.body instanceof Array) {
                 body = JSON.stringify(body);
             }
 
-            d("[node client] Req. body " + body);
+            d("[node client] Req. body: " + body);
         }
-
+        
         params.body = body;
         params.method = handler.method;
 
         if(DEBUG) {
             d("[node client] Preparing request");
-//            d('Params:'); d(JSON.stringify(params));
+            d('Params:'); d(JSON.stringify(params));
         }
 
         request(params, function(err, res, body) {
@@ -98,18 +102,20 @@ adapter.initialize = function(compose) {
             }
 
             d("[node client] Completed request, status code " + res.statusCode);
+
             if(res.statusCode >= 400) {
                 handler.emitter.trigger('error', body ? body : {
                     code: res.statusCode
                 });
             }
             else {
-
+                
                 if(!body) {
                     body = null;
                 }
 
                 if(typeof body === 'string'){
+
                     try {
                         body = JSON.parse(body);
                     }
@@ -117,13 +123,12 @@ adapter.initialize = function(compose) {
 
                         d("Exception parsing response JSON");
                         d(e);
-
+                
                         handler.emitter.trigger('error', e);
                     }
                 }
 
                 handler.emitter.trigger('success', body);
-
             }
 
         });
