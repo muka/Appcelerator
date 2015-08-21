@@ -41,16 +41,17 @@ var indexWrapper;
 var moduleWrapper = _.template(readSource("./tools/build/tpl/module-wrapper"));
 
 if(platform === 'browser') {
-    
+
     deps.push( { name: 'bluebird', source: "./vendors/bluebird/browser/bluebird" } );
     deps.push( { name: 'stompjs', source: "./vendors/stompjs/stomp.min" } );
-    
+    deps.push( { name: 'mqtt', source: "./vendors/browser-mqtt" } );
+
     wrapper = _.template(readSource("./tools/build/tpl/browser/wrapper"));
     indexWrapper = _.template(readSource("./tools/build/tpl/browser/index-wrapper"));
 }
 
 if(platform === 'titanium') {
-    
+
     deps.push( { name: 'bluebird', source: "./vendors/bluebird/titanium/bluebird" } );
 
     wrapper = _.template(readSource("./tools/build/tpl/titanium/wrapper"));
@@ -60,29 +61,29 @@ if(platform === 'titanium') {
 
 var buffer = [];
 _.forEach(deps, function(file) {
-    
+
     var name = file;
     var source = file;
-    
+
     if(typeof file === 'object') {
         name = file.name;
         source = file.source;
     }
-    
+
     buffer.push(
         moduleWrapper({
             name: name,
             content: readSource(source)
         })
     );
-    
+
 });
 
 var indexSource = readSource('./index');
 
-var content = indexWrapper({    
+var content = indexWrapper({
     index: indexSource,
-    modules: buffer.join(",\n")    
+    modules: buffer.join(",\n")
 });
 
 var fullsource = wrapper({

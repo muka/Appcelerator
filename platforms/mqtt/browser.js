@@ -138,118 +138,58 @@ adapter.initialize = function(compose) {
 
     adapter.connect = function(handler, connectionSuccess, connectionFail) {
 
-
-        // initialize the client, but only if not connected or reconnecting
-        // 0 not yet connected
-        // 1 connected
-        // 2 closing
-        // 3 closed
-
-        var needConnection = function() {
-
-            if(!ws()) {
-                return true;
-            }
-
-            if(client) {
-
-                d("WS state " + ws().readyState);
-                switch(ws().readyState) {
-                    case 0:
-
-                        d("WS is connecting");
-                        setTimeout(function() {
-                            adapter.connect(handler, connectionSuccess, connectionFail);
-                        }, 100);
-
-                        return null;
-
-                        break;
-                    case 1:
-
-                        d("WS is already connected");
-                        return false;
-
-                        break;
-                    case 2:
-                    case 3:
-
-                        d("WS is closed or closing");
-                        ws(null);
-
-                        break;
-                }
-            }
-
-            return true;
-        };
-
-        var needConn = needConnection();
-
-        if(needConn === null) {
-            return;
-        }
-
-        if (needConn) {
+        if (!client()) {
 
             d("Connecting to mqtt server " +
-                    mqttConf.proto +'://'+ mqttConf.host + ':' + mqttConf.port + mqttConf.path);
+                    mqttConf.proto + "://" + mqttConf.user + ":" + mqttConf.password +
+                    "@" + mqttConf.host + ":" + mqttConf.port);
 
-            var _websocket = new WebSocket(mqttConf.proto + "://" + mqttConf.host + ":" + mqttConf.port);
-            ws(_websocket);
+            client(mqtt.connect(mqttConf.proto + "://" + mqttConf.host + ":" + mqttConf.port,  {
+                username: mqttConf.user,
+                password: mqttConf.password
+            }));
 
-            if (!client()) {
+            client().on('close', function() {
+                d("Connection closed");
+                handler.emitter.trigger('close', client);
+            });
 
-                d("Connecting to mqtt server " +
-                        mqttConf.proto + "://" + mqttConf.user + ":" + mqttConf.password +
-                        "@" + mqttConf.host + ":" + mqttConf.port);
+            client().on('error', function(e) {
 
-                client(mqtt.connect(mqttConf.proto + "://" + mqttConf.host + ":" + mqttConf.port,  {
-                    username: mqttConf.user,
-                    password: mqttConf.password
-                }));
+                d("Connection error");
+                d(e);
 
-                client().on('close', function() {
-                    d("Connection closed");
-                    handler.emitter.trigger('close', client);
-                });
+                connectionFail(e);
+                handler.emitter.trigger('error', e);
+            });
 
-                client().on('error', function(e) {
+            client().on('connect', function() {
 
-                    d("Connection error");
-                    d(e);
+                d('Connected');
+                handler.emitter.trigger('connect', client);
 
-                    connectionFail(e);
-                    handler.emitter.trigger('error', e);
-                });
+                client().subscribe(topics.to, function(err, granted) {
 
-                client().on('connect', function() {
+                    err && handler.emitter.trigger('error', err);
 
-                    d('Connected');
-                    handler.emitter.trigger('connect', client);
+                    d("Subscribed to " + topics.to);
 
-                    client().subscribe(topics.to, function(err, granted) {
+                    client().on('message', function(topic, message, response) {
 
-                        err && handler.emitter.trigger('error', err);
-
-                        d("Subscribed to " + topics.to);
-
-                        client().on('message', function(topic, message, response) {
-
-                            if(topic === topics.to) {
-                                d("New message for topic.to");
-                                var resp = parseResponseContent(message);
-                                queue.handleResponse(resp);
-                            }
-                        });
-
-                        // return promise
-                        connectionSuccess();
-
+                        if(topic === topics.to) {
+                            d("New message for topic.to");
+                            var resp = JSON.parse(message.toString())
+                            queue.handleResponse(resp);
+                        }
                     });
-                });
 
-            }
+                    // return promise
+                    connectionSuccess();
+
+                });
+            });
+
+
 
         }
         else {
