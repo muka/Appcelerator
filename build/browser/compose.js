@@ -297,6 +297,10 @@ var Compose = function(config) {
         return compose.lib.Promise.resolve(new compose(_config));
     };
 
+    compose.getClient = function() {
+        return new compose.lib.Client.Client(new compose.lib.ServiceObject.ServiceObject);
+    }
+
 };
 
 Compose.require = Compose.prototype.require = function(m) {
@@ -309,6 +313,7 @@ Compose.setup = function(conf) {
 };
 
 module.exports = Compose;
+
 
 Compose.prototype.require = function(m) {
     var modules = {
@@ -2095,20 +2100,20 @@ solib.setup = function(compose) {
     var getApi = function() {
         return compose;
     };
-    
+
     var buildQueryString = function(obj, prefix) {
-        
+
         var qs = '';
         var qsparts = [];
-        
+
         for(var key in obj) {
             qsparts.push(key + '=' + obj[key]);
         }
-        
+
         qs = (prefix === undefined ? '?' : prefix) + qsparts.join('&');
         return qs;
     };
-    
+
     /**
      *
      * @constructor
@@ -2140,7 +2145,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Subscription.prototype.toJson = 
+    Subscription.prototype.toJson =
     Subscription.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this);
         return asString ? JSON.stringify(json) : json;
@@ -2166,11 +2171,11 @@ solib.setup = function(compose) {
                             +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
             so.getClient().post(url, me.toJSON(), function(data) {
-                
+
                 if(!data.id) {
                     throw new ComposeError("Error creating subscription on stream " + me.container().name);
                 }
-                
+
                 me.id = data.id;
                 me.created = data.id;
 
@@ -2271,16 +2276,16 @@ solib.setup = function(compose) {
      */
     SubscriptionList.prototype.load = function(id) {
         var me = this;
-        var so = me.container().container();
+
         var stream = me.container();
-        
+        var so = stream.container();
         return new Promise(function(resolve, reject) {
             var url = '/subscriptions/'+ id;
             so.getClient().get(url, null, function(data) {
                 var sub = stream.addSubscription(data)
                 resolve(sub);
             }, reject);
-        }).bind(me.container());
+        }).bind(stream);
     };
 
     /**
@@ -2341,12 +2346,12 @@ solib.setup = function(compose) {
     Actuation.prototype.invoke = function(body) {
         var me = this;
         return new Promise(function(resolve, reject) {
-            
+
             body = body || ""
-            
+
             var client = me.container().getClient()
             var url = '/'+ me.container().id +'/actuations/'+ me.name;
-            
+
             client.request({
                 method: 'POST',
                 path: url,
@@ -2360,9 +2365,9 @@ solib.setup = function(compose) {
                     me.createdAt = data.createdAt;
 
                     resolve(me);
-                }, 
-                error: reject   
-            })            
+                },
+                error: reject
+            })
 
         });
     };
@@ -2390,7 +2395,7 @@ solib.setup = function(compose) {
 
             var url = '/actuations/'+ me.id;
             var client = me.container().getClient();
-            
+
             var cb = function(data) {
 //                if(data.status === 'completed') {
 //                    me.reset();
@@ -2406,9 +2411,9 @@ solib.setup = function(compose) {
                 headers: {
                     'Content-Type': is_upd ? 'text/plain' : 'application/json'
                 },
-                body: is_upd ? newStatus : null, 
-                success: cb, 
-                error: reject   
+                body: is_upd ? newStatus : null,
+                success: cb,
+                error: reject
             })
 
         });
@@ -2585,7 +2590,7 @@ solib.setup = function(compose) {
 
         var list = this.getList();
         var data = list[index];
-        
+
         if(data) {
 
             var channels = data.channels;
@@ -2621,7 +2626,7 @@ solib.setup = function(compose) {
                         res.channels[_i] =  data.channels[_i]['current-value'];
                     })(i);
                 }
-                
+
                 return res;
             };
 
@@ -2632,9 +2637,9 @@ solib.setup = function(compose) {
     };
 
     DataBag.prototype.toJson = DataBag.prototype.toJSON = function(asString) {
-        
+
         var me = this;
-        
+
         var obj = {
             getList: function() { return me.getList(); },
             forEach: function(fn) {
@@ -2643,7 +2648,7 @@ solib.setup = function(compose) {
                 });
             }
         };
-        
+
         return compose.util.List.Enumerable.prototype.toJSON.call(obj, asString);
     };
 
@@ -2869,7 +2874,7 @@ solib.setup = function(compose) {
         }
 
         if(!lastUpdate) {
-            throw new compose.error.ValidationError("prepareData expect");
+            throw new compose.error.ValidationError("prepareData expect a readable Date value");
         }
 
         // convert from milliseconds to seconds
@@ -2933,24 +2938,24 @@ solib.setup = function(compose) {
      * @param {String} timeModifier  optional, possible values: lastUpdate, 1199192940 (time ago as timestamp)
      * @param {int} size             optional, the number of elements to return
      * @param {int} from             optional, the first value to get from the list for paging
-     * 
+     *
      * @return {Promise}             Promise callback with result
      */
     Stream.prototype.pull = function(timeModifier, size, from) {
 
         var me = this;
         timeModifier = timeModifier ? timeModifier : "";
-        
+
         var qs = '';
         if(size || from !== undefined) {
-            
+
             var obj = {};
             if(size) obj.size = size;
             if(from !== undefined) obj.from = from;
-            
+
             qs = buildQueryString(obj);
         }
-        
+
         return new Promise(function(resolve, reject) {
 
             if(!me.container().id) {
@@ -2964,7 +2969,7 @@ solib.setup = function(compose) {
                 if(res && res.data) {
                     data = res.data;
                 }
-                
+
                 var dataset = new DataBag(data);
                 dataset.container(me);
 
@@ -2980,7 +2985,7 @@ solib.setup = function(compose) {
      * @param {Object} options      search options
      * @param {int} size            optional, the number of elements to return
      * @param {int} from            optional, the first value to get from the list for paging
-     * 
+     *
      * @return {Promise} Promise callback with result
      */
     Stream.prototype.search = function(searchOptions, size, from) {
@@ -2996,7 +3001,7 @@ solib.setup = function(compose) {
             if(!searchOptions) {
                 throw new ComposeError("No params provided for search");
             }
-            
+
             var loadParams = function(options) {
                 var getFieldName = function(opts) {
 
@@ -3286,10 +3291,10 @@ solib.setup = function(compose) {
 
                     }
                 }
-                
+
                 return params;
             };
-            
+
             // Handle "array-based" search with multiple params
             if(searchOptions instanceof Array) {
                 var params = [];
@@ -3301,7 +3306,7 @@ solib.setup = function(compose) {
             else {
                 var params = loadParams(searchOptions);
             }
-            
+
             var qs = '';
             if(size || from !== undefined) {
 
@@ -3311,7 +3316,7 @@ solib.setup = function(compose) {
 
                 qs = buildQueryString(obj);
             }
-            
+
             var url = '/' + me.container().id + '/streams/' + me.name + '/search' + qs;
             me.container().getClient().post(url, params, function(res) {
 
@@ -3691,7 +3696,7 @@ solib.setup = function(compose) {
             if(!me.id) {
                 throw new Error("Missing ServiceObject id.");
             }
-            
+
             me.getClient().put('/'+ me.id, me.toJSON(), function(data) {
                 resolve && resolve(me);
             }, error);
@@ -3809,7 +3814,7 @@ solib.setup = function(compose) {
      * Search for Service Objects.
      * Example parameters:
      * 1) free-form query: { query: "some params" }
-     * 2) field params: 
+     * 2) field params:
      * {
      *   name: "Object Name",
      *   description: "optional description"
@@ -3817,8 +3822,8 @@ solib.setup = function(compose) {
      *      param1: "value"
      *   }
      * }
-     * 
-     * 
+     *
+     *
      * @params Object search parameters
      * @return {Promise}
      */
@@ -3862,10 +3867,328 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ******************************************************************************/
 
-var mqttlib = module.exports;
 
-mqttlib.initialize = function(compose) {
-    throw new compose.error.ComposeError("Browser support for mqtt has not been implemented yet! Please, use stomp instead");
+window.$$ComposeMqttClient = window.$$ComposeMqttClient || { ws: null, client: null };
+
+var ws = function(val) {
+    if(val !== undefined) {
+        window.$$ComposeMqttClient.ws = val;
+    }
+    return window.$$ComposeMqttClient.ws;
+};
+
+var client = function(val) {
+    if(val !== undefined) {
+        window.$$ComposeMqttClient.client = val;
+    }
+    return window.$$ComposeMqttClient.client;
+};
+
+var reconnectTimes = 5;
+var tries = reconnectTimes;
+
+var DEBUG = false;
+var d = function(m) { (DEBUG === true || (DEBUG > 19)) && console.log("" + m); };
+
+var parseUrl = function(href) {
+
+    var parser = document.createElement('a');
+    parser.href = href;
+
+    var o = {
+        protocol: null,
+        hostname: null,
+        port: null,
+        pathname: null,
+        search: null,
+        hash: null,
+        host: null
+    };
+
+    for(var i in o) {
+        if(parser[i]) {
+            o[i] = parser[i];
+        }
+    }
+
+    o.path = o.pathname;
+    o.host = o.hostname;
+
+    parser = null;
+    return o;
+};
+
+
+var adapter = module.exports;
+adapter.initialize = function(compose) {
+
+    var mqtt = compose.require("mqtt");
+
+    DEBUG = compose.config.debug;
+
+    var queue = this.queue;
+
+    var host;
+    if (compose.config.url) {
+        var urlinfo = parseUrl(compose.config.url);
+        host = urlinfo.hostname;
+    }
+
+    var ApiTokenKey = compose.config.apiKeyToken;
+
+    var proto = compose.config.mqtt.proto || null;
+    var secure = compose.config.mqtt.secure;
+
+    if(proto) {
+        secure = proto === "wss";
+    }
+
+    var port  = compose.config.mqtt.port || (secure ? 61624 : 61623);
+    proto = secure ? "wss" : "ws";
+
+    compose.config.mqtt = compose.config.mqtt || {};
+    var mqttConf = {
+        proto: proto,
+        host: host || "api.servioticy.com",
+        port: port,
+        user: compose.config.mqtt.user || "compose",
+        password: compose.config.mqtt.password || "shines",
+        path: compose.config.mqtt.path || ""
+    };
+    mqttConf.path = mqttConf.path.length && mqttConf.path.substr(0,1) !== '/' ? '/' + mqttConf.path  : mqttConf.path ;
+
+    var topics = {
+        from: "/topic/" + ApiTokenKey + '.from',
+        to: "/topic/" + ApiTokenKey + '.to'
+
+        , stream: function(handler) {
+
+            var _key = handler.subscription.destination || ApiTokenKey;
+            var streamTopic = '/topic/'+ _key + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+
+            d("Stream topic " + streamTopic);
+            return streamTopic;
+        }
+
+        , actions: function(handler) {
+
+            var actionsTopic = '/topic/'+ handler.actions.container().id + '.actions';
+
+            d("Actions topic " + actionsTopic);
+            return actionsTopic;
+        }
+    };
+
+    var request = {
+        meta: {
+            authorization: compose.config.apiKey
+        },
+        body: {}
+    };
+
+    adapter.connect = function(handler, connectionSuccess, connectionFail) {
+
+
+        // initialize the client, but only if not connected or reconnecting
+        // 0 not yet connected
+        // 1 connected
+        // 2 closing
+        // 3 closed
+
+        var needConnection = function() {
+
+            if(!ws()) {
+                return true;
+            }
+
+            if(client) {
+
+                d("WS state " + ws().readyState);
+                switch(ws().readyState) {
+                    case 0:
+
+                        d("WS is connecting");
+                        setTimeout(function() {
+                            adapter.connect(handler, connectionSuccess, connectionFail);
+                        }, 100);
+
+                        return null;
+
+                        break;
+                    case 1:
+
+                        d("WS is already connected");
+                        return false;
+
+                        break;
+                    case 2:
+                    case 3:
+
+                        d("WS is closed or closing");
+                        ws(null);
+
+                        break;
+                }
+            }
+
+            return true;
+        };
+
+        var needConn = needConnection();
+
+        if(needConn === null) {
+            return;
+        }
+
+        if (needConn) {
+
+            d("Connecting to mqtt server " +
+                    mqttConf.proto +'://'+ mqttConf.host + ':' + mqttConf.port + mqttConf.path);
+
+            var _websocket = new WebSocket(mqttConf.proto + "://" + mqttConf.host + ":" + mqttConf.port);
+            ws(_websocket);
+
+            if (!client()) {
+
+                d("Connecting to mqtt server " +
+                        mqttConf.proto + "://" + mqttConf.user + ":" + mqttConf.password +
+                        "@" + mqttConf.host + ":" + mqttConf.port);
+
+                client(mqtt.connect(mqttConf.proto + "://" + mqttConf.host + ":" + mqttConf.port,  {
+                    username: mqttConf.user,
+                    password: mqttConf.password
+                }));
+
+                client().on('close', function() {
+                    d("Connection closed");
+                    handler.emitter.trigger('close', client);
+                });
+
+                client().on('error', function(e) {
+
+                    d("Connection error");
+                    d(e);
+
+                    connectionFail(e);
+                    handler.emitter.trigger('error', e);
+                });
+
+                client().on('connect', function() {
+
+                    d('Connected');
+                    handler.emitter.trigger('connect', client);
+
+                    client().subscribe(topics.to, function(err, granted) {
+
+                        err && handler.emitter.trigger('error', err);
+
+                        d("Subscribed to " + topics.to);
+
+                        client().on('message', function(topic, message, response) {
+
+                            if(topic === topics.to) {
+                                d("New message for topic.to");
+                                var resp = parseResponseContent(message);
+                                queue.handleResponse(resp);
+                            }
+                        });
+
+                        // return promise
+                        connectionSuccess();
+
+                    });
+                });
+
+            }
+
+        }
+        else {
+            // already connected
+            connectionSuccess();
+        }
+    };
+
+    adapter.disconnect = function() {
+        queue.clear();
+        client().close();
+    };
+
+    /*
+     * @param {RequestHandler} handler
+     */
+    adapter.request = function(handler) {
+
+        request.meta.method = handler.method.toUpperCase();
+        request.meta.url = handler.path;
+
+        if (handler.body) {
+            var body = handler.body;
+            if (typeof body === "string") {
+                try {
+                    body = JSON.parse(body);
+                }
+                catch(e) {}
+            }
+            request.body = body;
+        }
+        else {
+            delete request.body;
+        }
+
+        request.meta.messageId = queue.add(handler);
+
+        var ropts = {
+//            priority: 1
+        };
+
+        // 3rd arg has qos option { qos: 0|1|2 }
+        // @todo check which one fit better in this case
+        d("Sending message..");
+        client().publish(topics.from, JSON.stringify(request), { qos: 0 /*, retain: true*/ }, function() {
+            d("Message published");
+        });
+    };
+
+    /*
+     * @param {RequestHandler} handler
+     */
+    adapter.subscribe = function(handler) {
+
+        var topic = topics[ handler.topic ] ? topics[ handler.topic ] : handler.topic;
+        if(typeof topic === 'function') {
+            topic = topic(handler);
+        };
+
+        var uuid = queue.registerSubscription(topic, handler);
+
+        d("Listening to " + topic);
+
+        client.on('message', function(srctopic, message, response) {
+
+//            console.log(src);
+//            console.log(message.toString());
+
+            if(topic === srctopic) {
+
+                d("New message from subscription topic");
+
+                var obj = {
+                    meta: {
+                        messageId: uuid
+                    },
+                    body: JSON.parse(message.toString())
+                };
+
+                queue.handleResponse(obj);
+            }
+        });
+
+        client.subscribe(topic, function() {
+            d('Subscribed to subscription topic');
+        });
+
+    };
+
 };
 
 
@@ -4253,15 +4576,34 @@ httplib.initialize = function(compose) {
         };
 
         http.open(handler.method, url, true);
-        http.setRequestHeader("Content-type", "application/json");
-        http.setRequestHeader("Authorization", compose.config.apiKey);
-
-        var data = null;
-        if(handler.body) {
-            data = JSON.stringify(handler.body);
+        
+        var headers = {
+            "Content-type": "application/json",
+            "Authorization": compose.config.apiKey
+        };
+        
+        if(handler.headers) {
+            for(var key in handler.headers) {
+                headers[ key ] = handler.headers[key];
+            }
         }
 
-        http.send(data);
+        for(var key in headers) {
+            http.setRequestHeader(key, headers[ key ]);
+        }
+
+        var body = null;
+        if(handler.body) {
+
+            body = handler.body
+            if(typeof handler.body === 'object' || handler.body instanceof Array) {
+                body = JSON.stringify(body);
+            }
+
+            d("[browser client] Req. body: " + body);
+        }
+
+        http.send(body);
     };
 
 };

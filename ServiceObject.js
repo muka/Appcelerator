@@ -30,20 +30,20 @@ solib.setup = function(compose) {
     var getApi = function() {
         return compose;
     };
-    
+
     var buildQueryString = function(obj, prefix) {
-        
+
         var qs = '';
         var qsparts = [];
-        
+
         for(var key in obj) {
             qsparts.push(key + '=' + obj[key]);
         }
-        
+
         qs = (prefix === undefined ? '?' : prefix) + qsparts.join('&');
         return qs;
     };
-    
+
     /**
      *
      * @constructor
@@ -75,7 +75,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Subscription.prototype.toJson = 
+    Subscription.prototype.toJson =
     Subscription.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this);
         return asString ? JSON.stringify(json) : json;
@@ -101,11 +101,11 @@ solib.setup = function(compose) {
                             +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
             so.getClient().post(url, me.toJSON(), function(data) {
-                
+
                 if(!data.id) {
                     throw new ComposeError("Error creating subscription on stream " + me.container().name);
                 }
-                
+
                 me.id = data.id;
                 me.created = data.id;
 
@@ -206,16 +206,16 @@ solib.setup = function(compose) {
      */
     SubscriptionList.prototype.load = function(id) {
         var me = this;
-        var so = me.container().container();
+
         var stream = me.container();
-        
+        var so = stream.container();
         return new Promise(function(resolve, reject) {
             var url = '/subscriptions/'+ id;
             so.getClient().get(url, null, function(data) {
                 var sub = stream.addSubscription(data)
                 resolve(sub);
             }, reject);
-        }).bind(me.container());
+        }).bind(stream);
     };
 
     /**
@@ -276,12 +276,12 @@ solib.setup = function(compose) {
     Actuation.prototype.invoke = function(body) {
         var me = this;
         return new Promise(function(resolve, reject) {
-            
+
             body = body || ""
-            
+
             var client = me.container().getClient()
             var url = '/'+ me.container().id +'/actuations/'+ me.name;
-            
+
             client.request({
                 method: 'POST',
                 path: url,
@@ -295,9 +295,9 @@ solib.setup = function(compose) {
                     me.createdAt = data.createdAt;
 
                     resolve(me);
-                }, 
-                error: reject   
-            })            
+                },
+                error: reject
+            })
 
         });
     };
@@ -325,7 +325,7 @@ solib.setup = function(compose) {
 
             var url = '/actuations/'+ me.id;
             var client = me.container().getClient();
-            
+
             var cb = function(data) {
 //                if(data.status === 'completed') {
 //                    me.reset();
@@ -341,9 +341,9 @@ solib.setup = function(compose) {
                 headers: {
                     'Content-Type': is_upd ? 'text/plain' : 'application/json'
                 },
-                body: is_upd ? newStatus : null, 
-                success: cb, 
-                error: reject   
+                body: is_upd ? newStatus : null,
+                success: cb,
+                error: reject
             })
 
         });
@@ -520,7 +520,7 @@ solib.setup = function(compose) {
 
         var list = this.getList();
         var data = list[index];
-        
+
         if(data) {
 
             var channels = data.channels;
@@ -556,7 +556,7 @@ solib.setup = function(compose) {
                         res.channels[_i] =  data.channels[_i]['current-value'];
                     })(i);
                 }
-                
+
                 return res;
             };
 
@@ -567,9 +567,9 @@ solib.setup = function(compose) {
     };
 
     DataBag.prototype.toJson = DataBag.prototype.toJSON = function(asString) {
-        
+
         var me = this;
-        
+
         var obj = {
             getList: function() { return me.getList(); },
             forEach: function(fn) {
@@ -578,7 +578,7 @@ solib.setup = function(compose) {
                 });
             }
         };
-        
+
         return compose.util.List.Enumerable.prototype.toJSON.call(obj, asString);
     };
 
@@ -804,7 +804,7 @@ solib.setup = function(compose) {
         }
 
         if(!lastUpdate) {
-            throw new compose.error.ValidationError("prepareData expect");
+            throw new compose.error.ValidationError("prepareData expect a readable Date value");
         }
 
         // convert from milliseconds to seconds
@@ -868,24 +868,24 @@ solib.setup = function(compose) {
      * @param {String} timeModifier  optional, possible values: lastUpdate, 1199192940 (time ago as timestamp)
      * @param {int} size             optional, the number of elements to return
      * @param {int} from             optional, the first value to get from the list for paging
-     * 
+     *
      * @return {Promise}             Promise callback with result
      */
     Stream.prototype.pull = function(timeModifier, size, from) {
 
         var me = this;
         timeModifier = timeModifier ? timeModifier : "";
-        
+
         var qs = '';
         if(size || from !== undefined) {
-            
+
             var obj = {};
             if(size) obj.size = size;
             if(from !== undefined) obj.from = from;
-            
+
             qs = buildQueryString(obj);
         }
-        
+
         return new Promise(function(resolve, reject) {
 
             if(!me.container().id) {
@@ -899,7 +899,7 @@ solib.setup = function(compose) {
                 if(res && res.data) {
                     data = res.data;
                 }
-                
+
                 var dataset = new DataBag(data);
                 dataset.container(me);
 
@@ -915,7 +915,7 @@ solib.setup = function(compose) {
      * @param {Object} options      search options
      * @param {int} size            optional, the number of elements to return
      * @param {int} from            optional, the first value to get from the list for paging
-     * 
+     *
      * @return {Promise} Promise callback with result
      */
     Stream.prototype.search = function(searchOptions, size, from) {
@@ -931,7 +931,7 @@ solib.setup = function(compose) {
             if(!searchOptions) {
                 throw new ComposeError("No params provided for search");
             }
-            
+
             var loadParams = function(options) {
                 var getFieldName = function(opts) {
 
@@ -1221,10 +1221,10 @@ solib.setup = function(compose) {
 
                     }
                 }
-                
+
                 return params;
             };
-            
+
             // Handle "array-based" search with multiple params
             if(searchOptions instanceof Array) {
                 var params = [];
@@ -1236,7 +1236,7 @@ solib.setup = function(compose) {
             else {
                 var params = loadParams(searchOptions);
             }
-            
+
             var qs = '';
             if(size || from !== undefined) {
 
@@ -1246,7 +1246,7 @@ solib.setup = function(compose) {
 
                 qs = buildQueryString(obj);
             }
-            
+
             var url = '/' + me.container().id + '/streams/' + me.name + '/search' + qs;
             me.container().getClient().post(url, params, function(res) {
 
@@ -1626,7 +1626,7 @@ solib.setup = function(compose) {
             if(!me.id) {
                 throw new Error("Missing ServiceObject id.");
             }
-            
+
             me.getClient().put('/'+ me.id, me.toJSON(), function(data) {
                 resolve && resolve(me);
             }, error);
@@ -1744,7 +1744,7 @@ solib.setup = function(compose) {
      * Search for Service Objects.
      * Example parameters:
      * 1) free-form query: { query: "some params" }
-     * 2) field params: 
+     * 2) field params:
      * {
      *   name: "Object Name",
      *   description: "optional description"
@@ -1752,8 +1752,8 @@ solib.setup = function(compose) {
      *      param1: "value"
      *   }
      * }
-     * 
-     * 
+     *
+     *
      * @params Object search parameters
      * @return {Promise}
      */

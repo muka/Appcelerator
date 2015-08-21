@@ -292,6 +292,10 @@ var Compose = function(config) {
         return compose.lib.Promise.resolve(new compose(_config));
     };
 
+    compose.getClient = function() {
+        return new compose.lib.Client.Client(new compose.lib.ServiceObject.ServiceObject);
+    }
+
 };
 
 Compose.require = Compose.prototype.require = function(m) {

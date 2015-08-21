@@ -38,33 +38,11 @@ var parseResponseContent = function(message) {
         return response;
     }
 
-    // parts 0 is header, 1 is body
-    var parts = message.toString().split("\n\n");
+    message = JSON.parse(message.toString())
 
-    var headerparts = parts[0].split("\n");
+    response.body = message.body || {}
+    response.meta = message.meta || {}
 
-    // first is type(?), see spec
-    response.type = headerparts.shift();
-
-    for (var i in headerparts) {
-        var keyval = headerparts[i].match(/^(.+)\:(.*)$/);
-        response.meta[keyval[1]] = keyval[2];
-    }
-
-    response.body = parts[1] ? JSON.parse(parts[1]) : {};
-    
-    if(typeof response.body.body === 'string') {
-        response.body.body = JSON.parse(response.body.body);
-    }
-    
-    if(response.body.meta) {
-        response.meta = response.body.meta;
-    }
-    
-    if(response.body.body) {
-        response.body = response.body.body;
-    }
-    
     return response;
 };
 
@@ -171,7 +149,6 @@ adapter.initialize = function(compose) {
 
                         if(topic === topics.to) {
                             d("New message for topic.to");
-                            
                             var resp = parseResponseContent(message);
                             queue.handleResponse(resp);
                         }
@@ -215,7 +192,7 @@ adapter.initialize = function(compose) {
         else {
             delete request.body;
         }
-        
+
         request.meta.messageId = queue.add(handler);
 
 //        console.log("#### mqtt request body", request);
@@ -277,4 +254,3 @@ adapter.initialize = function(compose) {
 
 
 };
-

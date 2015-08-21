@@ -292,6 +292,10 @@ var Compose = function(config) {
         return compose.lib.Promise.resolve(new compose(_config));
     };
 
+    compose.getClient = function() {
+        return new compose.lib.Client.Client(new compose.lib.ServiceObject.ServiceObject);
+    }
+
 };
 
 Compose.require = Compose.prototype.require = function(m) {
@@ -304,6 +308,7 @@ Compose.setup = function(conf) {
 };
 
 module.exports = Compose;
+
 
 Compose.prototype.require = function(m) {
     var modules = {
@@ -2090,20 +2095,20 @@ solib.setup = function(compose) {
     var getApi = function() {
         return compose;
     };
-    
+
     var buildQueryString = function(obj, prefix) {
-        
+
         var qs = '';
         var qsparts = [];
-        
+
         for(var key in obj) {
             qsparts.push(key + '=' + obj[key]);
         }
-        
+
         qs = (prefix === undefined ? '?' : prefix) + qsparts.join('&');
         return qs;
     };
-    
+
     /**
      *
      * @constructor
@@ -2135,7 +2140,7 @@ solib.setup = function(compose) {
      * @param {boolean} asString Return as string if true, object otherwise
      * @returns {Object|String}
      */
-    Subscription.prototype.toJson = 
+    Subscription.prototype.toJson =
     Subscription.prototype.toJSON = function(asString) {
         var json = compose.util.copyVal(this);
         return asString ? JSON.stringify(json) : json;
@@ -2161,11 +2166,11 @@ solib.setup = function(compose) {
                             +'/subscriptions'; //+ (me.id ? '/'+me.id : '');
 
             so.getClient().post(url, me.toJSON(), function(data) {
-                
+
                 if(!data.id) {
                     throw new ComposeError("Error creating subscription on stream " + me.container().name);
                 }
-                
+
                 me.id = data.id;
                 me.created = data.id;
 
@@ -2266,16 +2271,16 @@ solib.setup = function(compose) {
      */
     SubscriptionList.prototype.load = function(id) {
         var me = this;
-        var so = me.container().container();
+
         var stream = me.container();
-        
+        var so = stream.container();
         return new Promise(function(resolve, reject) {
             var url = '/subscriptions/'+ id;
             so.getClient().get(url, null, function(data) {
                 var sub = stream.addSubscription(data)
                 resolve(sub);
             }, reject);
-        }).bind(me.container());
+        }).bind(stream);
     };
 
     /**
@@ -2336,12 +2341,12 @@ solib.setup = function(compose) {
     Actuation.prototype.invoke = function(body) {
         var me = this;
         return new Promise(function(resolve, reject) {
-            
+
             body = body || ""
-            
+
             var client = me.container().getClient()
             var url = '/'+ me.container().id +'/actuations/'+ me.name;
-            
+
             client.request({
                 method: 'POST',
                 path: url,
@@ -2355,9 +2360,9 @@ solib.setup = function(compose) {
                     me.createdAt = data.createdAt;
 
                     resolve(me);
-                }, 
-                error: reject   
-            })            
+                },
+                error: reject
+            })
 
         });
     };
@@ -2385,7 +2390,7 @@ solib.setup = function(compose) {
 
             var url = '/actuations/'+ me.id;
             var client = me.container().getClient();
-            
+
             var cb = function(data) {
 //                if(data.status === 'completed') {
 //                    me.reset();
@@ -2401,9 +2406,9 @@ solib.setup = function(compose) {
                 headers: {
                     'Content-Type': is_upd ? 'text/plain' : 'application/json'
                 },
-                body: is_upd ? newStatus : null, 
-                success: cb, 
-                error: reject   
+                body: is_upd ? newStatus : null,
+                success: cb,
+                error: reject
             })
 
         });
@@ -2580,7 +2585,7 @@ solib.setup = function(compose) {
 
         var list = this.getList();
         var data = list[index];
-        
+
         if(data) {
 
             var channels = data.channels;
@@ -2616,7 +2621,7 @@ solib.setup = function(compose) {
                         res.channels[_i] =  data.channels[_i]['current-value'];
                     })(i);
                 }
-                
+
                 return res;
             };
 
@@ -2627,9 +2632,9 @@ solib.setup = function(compose) {
     };
 
     DataBag.prototype.toJson = DataBag.prototype.toJSON = function(asString) {
-        
+
         var me = this;
-        
+
         var obj = {
             getList: function() { return me.getList(); },
             forEach: function(fn) {
@@ -2638,7 +2643,7 @@ solib.setup = function(compose) {
                 });
             }
         };
-        
+
         return compose.util.List.Enumerable.prototype.toJSON.call(obj, asString);
     };
 
@@ -2864,7 +2869,7 @@ solib.setup = function(compose) {
         }
 
         if(!lastUpdate) {
-            throw new compose.error.ValidationError("prepareData expect");
+            throw new compose.error.ValidationError("prepareData expect a readable Date value");
         }
 
         // convert from milliseconds to seconds
@@ -2928,24 +2933,24 @@ solib.setup = function(compose) {
      * @param {String} timeModifier  optional, possible values: lastUpdate, 1199192940 (time ago as timestamp)
      * @param {int} size             optional, the number of elements to return
      * @param {int} from             optional, the first value to get from the list for paging
-     * 
+     *
      * @return {Promise}             Promise callback with result
      */
     Stream.prototype.pull = function(timeModifier, size, from) {
 
         var me = this;
         timeModifier = timeModifier ? timeModifier : "";
-        
+
         var qs = '';
         if(size || from !== undefined) {
-            
+
             var obj = {};
             if(size) obj.size = size;
             if(from !== undefined) obj.from = from;
-            
+
             qs = buildQueryString(obj);
         }
-        
+
         return new Promise(function(resolve, reject) {
 
             if(!me.container().id) {
@@ -2959,7 +2964,7 @@ solib.setup = function(compose) {
                 if(res && res.data) {
                     data = res.data;
                 }
-                
+
                 var dataset = new DataBag(data);
                 dataset.container(me);
 
@@ -2975,7 +2980,7 @@ solib.setup = function(compose) {
      * @param {Object} options      search options
      * @param {int} size            optional, the number of elements to return
      * @param {int} from            optional, the first value to get from the list for paging
-     * 
+     *
      * @return {Promise} Promise callback with result
      */
     Stream.prototype.search = function(searchOptions, size, from) {
@@ -2991,7 +2996,7 @@ solib.setup = function(compose) {
             if(!searchOptions) {
                 throw new ComposeError("No params provided for search");
             }
-            
+
             var loadParams = function(options) {
                 var getFieldName = function(opts) {
 
@@ -3281,10 +3286,10 @@ solib.setup = function(compose) {
 
                     }
                 }
-                
+
                 return params;
             };
-            
+
             // Handle "array-based" search with multiple params
             if(searchOptions instanceof Array) {
                 var params = [];
@@ -3296,7 +3301,7 @@ solib.setup = function(compose) {
             else {
                 var params = loadParams(searchOptions);
             }
-            
+
             var qs = '';
             if(size || from !== undefined) {
 
@@ -3306,7 +3311,7 @@ solib.setup = function(compose) {
 
                 qs = buildQueryString(obj);
             }
-            
+
             var url = '/' + me.container().id + '/streams/' + me.name + '/search' + qs;
             me.container().getClient().post(url, params, function(res) {
 
@@ -3686,7 +3691,7 @@ solib.setup = function(compose) {
             if(!me.id) {
                 throw new Error("Missing ServiceObject id.");
             }
-            
+
             me.getClient().put('/'+ me.id, me.toJSON(), function(data) {
                 resolve && resolve(me);
             }, error);
@@ -3804,7 +3809,7 @@ solib.setup = function(compose) {
      * Search for Service Objects.
      * Example parameters:
      * 1) free-form query: { query: "some params" }
-     * 2) field params: 
+     * 2) field params:
      * {
      *   name: "Object Name",
      *   description: "optional description"
@@ -3812,8 +3817,8 @@ solib.setup = function(compose) {
      *      param1: "value"
      *   }
      * }
-     * 
-     * 
+     *
+     *
      * @params Object search parameters
      * @return {Promise}
      */
@@ -4051,27 +4056,29 @@ return module && module.exports && Object.keys(module.exports).length
 var exports = {}; var module = { exports: exports };
 
 /*******************************************************************************
-Copyright 2015 CREATE-NET
-Developed for COMPOSE project (compose-project.eu)
-
-@author Luca Capra <luca.capra@create-net.org>
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-******************************************************************************/
+ Copyright 2015 CREATE-NET
+ Developed for COMPOSE project (compose-project.eu)
+ 
+ @author Luca Capra <luca.capra@create-net.org>
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+ http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ ******************************************************************************/
 
 var DEBUG = false;
 DEBUG = true;
-var d = function(m) { DEBUG && console.log(m); };
+var d = function(m) {
+    DEBUG && console.log(m);
+};
 
 var adapter = module.exports;
 adapter.initialize = function(compose) {
@@ -4082,7 +4089,8 @@ adapter.initialize = function(compose) {
         d("[titanium client] connect..");
         connectionSuccess();
     };
-    adapter.disconnect = function() {};
+    adapter.disconnect = function() {
+    };
 
     /*
      * @param {RequestHandler} handler
@@ -4100,10 +4108,11 @@ adapter.initialize = function(compose) {
             d("[titanium client] Response received " + status);
 
 //            try {
-                try {
-                    data = JSON.parse(body);
-                }
-                catch(e) {}
+            try {
+                data = JSON.parse(body);
+            }
+            catch (e) {
+            }
 //            }
 //            catch (e) {
 //                status = 500;
@@ -4112,7 +4121,7 @@ adapter.initialize = function(compose) {
 //                };
 //            }
 
-            if(status >= 400) {
+            if (status >= 400) {
                 handler.emitter.trigger('error', data ? data : {
                     code: status
                 });
@@ -4126,7 +4135,7 @@ adapter.initialize = function(compose) {
             handler.emitter.trigger('error', e);
         };
 
-        if(DEBUG){
+        if (DEBUG) {
             d("[titanium client] Preparing request");
             d('Params:');
             d(JSON.stringify(params));
@@ -4136,17 +4145,30 @@ adapter.initialize = function(compose) {
 
         http.open(handler.method, compose.config.url + handler.path);
 
-        http.setRequestHeader('Content-Type', 'application/json');
-        http.setRequestHeader('Authorization', compose.config.apiKey);
+        var headers = {
+            "Content-type": "application/json",
+            "Authorization": compose.config.apiKey
+        };
 
-        var body = null
-        if(handler.body) {
-            if(typeof handler.body !== "string") {
-                body = JSON.stringify(handler.body);
+        if (handler.headers) {
+            for (var key in handler.headers) {
+                headers[ key ] = handler.headers[key];
             }
-            else {
-                body = handler.body;
+        }
+
+        for (var key in headers) {
+            http.setRequestHeader(key, headers[ key ]);
+        }
+
+        var body = null;
+        if (handler.body) {
+
+            body = handler.body
+            if (typeof handler.body === 'object' || handler.body instanceof Array) {
+                body = JSON.stringify(body);
             }
+
+            d("[titanium client] Req. body: " + body);
         }
 
         http.send(body);
