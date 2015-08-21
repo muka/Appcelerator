@@ -73,16 +73,16 @@ adapter.initialize = function(compose) {
 
         var body = null;
         if(handler.body) {
-            
+
             body = handler.body
-            
+
             if(typeof handler.body === 'object' || handler.body instanceof Array) {
                 body = JSON.stringify(body);
             }
 
             d("[node client] Req. body: " + body);
         }
-        
+
         params.body = body;
         params.method = handler.method;
 
@@ -104,12 +104,14 @@ adapter.initialize = function(compose) {
             d("[node client] Completed request, status code " + res.statusCode);
 
             if(res.statusCode >= 400) {
-                handler.emitter.trigger('error', body ? body : {
+                var err = body ? body : {
                     code: res.statusCode
-                });
+                }
+                handler.emitter.trigger('error', err);
+                handler.onError(err)
             }
             else {
-                
+
                 if(!body) {
                     body = null;
                 }
@@ -123,12 +125,13 @@ adapter.initialize = function(compose) {
 
                         d("Exception parsing response JSON");
                         d(e);
-                
+
                         handler.emitter.trigger('error', e);
                     }
                 }
 
-                handler.emitter.trigger('success', body);
+                handler.emitter && handler.emitter.trigger('success', body);
+                handler.onSuccess && handler.onSuccess(body);
             }
 
         });

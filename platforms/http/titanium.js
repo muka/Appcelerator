@@ -1,15 +1,15 @@
 /*******************************************************************************
  Copyright 2015 CREATE-NET
  Developed for COMPOSE project (compose-project.eu)
- 
+
  @author Luca Capra <luca.capra@create-net.org>
- 
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,12 +65,15 @@ adapter.initialize = function(compose) {
 //            }
 
             if (status >= 400) {
-                handler.emitter.trigger('error', data ? data : {
+                var err = {
                     code: status
-                });
+                }
+                handler.emitter.trigger('error', err);
+                handler.onError(err)
             }
             else {
-                handler.emitter.trigger('success', data);
+                handler.emitter && handler.emitter.trigger('success', data);
+                handler.onSuccess && handler.onSuccess(data);
             }
         };
 

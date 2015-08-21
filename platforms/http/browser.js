@@ -43,9 +43,11 @@ httplib.initialize = function(compose) {
                 return;
             }
             if (http.status >= 400) {
-                handler.emitter.trigger('error', {
+                var err = {
                     code: http.status
-                });
+                }
+                handler.emitter.trigger('error', err);
+                handler.onError(err)
             }
             else {
 
@@ -55,17 +57,19 @@ httplib.initialize = function(compose) {
                     data = JSON.parse(data);
                 }
                 catch(e) {}
-                handler.emitter.trigger('success', data);
+
+                handler.emitter && handler.emitter.trigger('success', data);
+                handler.onSuccess && handler.onSuccess(data);
             }
         };
 
         http.open(handler.method, url, true);
-        
+
         var headers = {
             "Content-type": "application/json",
             "Authorization": compose.config.apiKey
         };
-        
+
         if(handler.headers) {
             for(var key in handler.headers) {
                 headers[ key ] = handler.headers[key];

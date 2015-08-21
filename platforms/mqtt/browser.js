@@ -108,13 +108,14 @@ adapter.initialize = function(compose) {
     mqttConf.path = mqttConf.path.length && mqttConf.path.substr(0,1) !== '/' ? '/' + mqttConf.path  : mqttConf.path ;
 
     var topics = {
-        from: "/topic/" + ApiTokenKey + '.from',
-        to: "/topic/" + ApiTokenKey + '.to'
+        from: ApiTokenKey + '/from',
+        to: ApiTokenKey + '/to'
 
         , stream: function(handler) {
 
             var _key = handler.subscription.destination || ApiTokenKey;
-            var streamTopic = '/topic/'+ _key + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+
+            var streamTopic = _key + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
 
             d("Stream topic " + streamTopic);
             return streamTopic;
@@ -122,11 +123,12 @@ adapter.initialize = function(compose) {
 
         , actions: function(handler) {
 
-            var actionsTopic = '/topic/'+ handler.actions.container().id + '.actions';
+            var actionsTopic = handler.actions.container().id + '/actions';
 
             d("Actions topic " + actionsTopic);
             return actionsTopic;
         }
+
     };
 
     var request = {
@@ -146,7 +148,8 @@ adapter.initialize = function(compose) {
 
             client(mqtt.connect(mqttConf.proto + "://" + mqttConf.host + ":" + mqttConf.port,  {
                 username: mqttConf.user,
-                password: mqttConf.password
+                password: mqttConf.password,
+                keepalive: 0,
             }));
 
             client().on('close', function() {
@@ -175,7 +178,6 @@ adapter.initialize = function(compose) {
                     d("Subscribed to " + topics.to);
 
                     client().on('message', function(topic, message, response) {
-
                         if(topic === topics.to) {
                             d("New message for topic.to");
                             var resp = JSON.parse(message.toString())
@@ -232,9 +234,8 @@ adapter.initialize = function(compose) {
         };
 
         // 3rd arg has qos option { qos: 0|1|2 }
-        // @todo check which one fit better in this case
         d("Sending message..");
-        client().publish(topics.from, JSON.stringify(request), { qos: 0 /*, retain: true*/ }, function() {
+        client().publish(topics.from, JSON.stringify(request), { qos: 2 /*, retain: true*/ }, function() {
             d("Message published");
         });
     };
@@ -253,7 +254,7 @@ adapter.initialize = function(compose) {
 
         d("Listening to " + topic);
 
-        client.on('message', function(srctopic, message, response) {
+        client().on('message', function(srctopic, message, response) {
 
 //            console.log(src);
 //            console.log(message.toString());
@@ -273,7 +274,7 @@ adapter.initialize = function(compose) {
             }
         });
 
-        client.subscribe(topic, function() {
+        client().subscribe(topic, function() {
             d('Subscribed to subscription topic');
         });
 

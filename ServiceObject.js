@@ -102,8 +102,10 @@ solib.setup = function(compose) {
 
             so.getClient().post(url, me.toJSON(), function(data) {
 
+                console.warn(me.name, data);
+
                 if(!data.id) {
-                    throw new ComposeError("Error creating subscription on stream " + me.container().name);
+                    return reject(new ComposeError("Error creating subscription on stream " + me.container().name));
                 }
 
                 me.id = data.id;
@@ -712,10 +714,9 @@ solib.setup = function(compose) {
         return me.getSubscriptions().refresh().then(function() {
 
             var subscription = me.getSubscriptions().get(defaultCallback, "callback");
+
             if(!subscription) {
-
                 subscription = me.addSubscription(me.__$pubsub);
-
                 return subscription.create().then(listener);
             }
             else {

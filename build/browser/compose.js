@@ -1244,13 +1244,13 @@ client.setup = function(compose) {
          * Normalize the returned body
          *
          * @deprecated Ensure to fix this code once the bridge is stable
-         * */
+         */
         this.normalizeBody = function(message) {
 
             if(typeof message === 'string') {
                 message = parseJson(message);
             }
-            
+
             if(message.body && typeof message.body === 'string') {
                 message.body = parseJson(message.body);
             }
@@ -1272,7 +1272,7 @@ client.setup = function(compose) {
             if(message.headers && message.headers.messageId !== undefined) {
                 message.messageId = message.headers.messageId;
             }
-            
+
             return message;
         };
 
@@ -1286,24 +1286,26 @@ client.setup = function(compose) {
                 d(response);
                 return;
             }
-            
+
             var errorResponse = this.isErrorResponse(response.body);
             if(response.messageId) {
 
                 var handler = this.get(response.messageId);
 
                 if(handler) {
-                    
+
                     if(errorResponse) {
-                        handler.emitter.trigger('error', response.body);
+                        handler.emitter && handler.emitter.trigger('error', response.body, message, raw);
+                        handler.onError && handler.onError(response.body, message, raw)
                     }
                     else {
                         //a callback is provided to handle the dispatch the event
-                        if(handler.onQueueData && typeof handler.onQueueData === 'function') {
+                        if(handler.onQueueData) {
                             handler.onQueueData.call(handler, response, message);
                         }
                         else {
-                            handler.emitter.trigger(handler.emitterChannel || 'success', response.body);
+                            handler.emitter && handler.emitter.trigger(handler.emitterChannel || 'success', response.body, message, raw);
+                            handler.onSuccess(response.body, message, raw);
                         }
                     }
 
@@ -1318,7 +1320,7 @@ client.setup = function(compose) {
 
             d("[queue manager] Message not found, id " + ((response.messageId) ? response.messageId : '[not set]'));
 //                this.triggerAll('data', response, message);
-            this.receiver() && this.receiver().notify('data', response, message);
+            this.receiver() && this.receiver().notify('data', response, message, raw);
 
             return false;
         };
@@ -1437,11 +1439,16 @@ client.setup = function(compose) {
         this.ServiceObject = so;
         this.queue = queueManager;
 
-        this.requestHandler = new RequestHandler();
-        this.requestHandler.container(this);
+        this.requestHandler = this.createRequestHandler()
 
         this.initialize();
     };
+
+    Client.prototype.createRequestHandler = function() {
+        var requestHandler = new RequestHandler();
+        requestHandler.container(this);
+        return requestHandler
+    }
 
     Client.prototype.initialize = function() {
         this.adapter().initialize && this.adapter().initialize.call(this, compose);
@@ -1462,48 +1469,50 @@ client.setup = function(compose) {
     };
 
     Client.prototype.request = function(method, path, body, success, error, headers) {
-        
+
         var reqconf = {
             method: method,
             path: path,
             body: body,
             headers: headers || null
         };
-        
+
         var params;
-        
+
         if(arguments.length === 1) {
             params = arguments[0]
             method = arguments[0].method
         }
-        
+
         if(arguments.length === 2) {
             params = arguments[1]
             reqconf.method = method
         }
-        
+
         if(params) {
-            
+
             reqconf.method = params.method || reqconf.method;
             reqconf.path = params.path;
             reqconf.body = params.body;
             reqconf.headers = params.headers || null;
-            
+
             success = params.success;
             error = params.error;
         }
-        
+
         var me = this;
-        me.requestHandler.setConf(reqconf);
 
-        d("[client] Requesting " + this.requestHandler.method + " " + this.requestHandler.path);
+        var handler = this.createRequestHandler()
+        handler.setConf(reqconf);
 
-        success && me.requestHandler.emitter.once('success', success);
-        error && me.requestHandler.emitter.once('error', error);
+        handler.onSuccess = success;
+        handler.onError = error;
+
+        d("[client] Requesting " + handler.method + " " + handler.path);
 
         this.connect()
             .then(function() {
-                me.adapter().request(me.requestHandler);
+                me.adapter().request(handler);
             })
             .catch(function(err) {
                 d("Connection error");
@@ -2172,8 +2181,10 @@ solib.setup = function(compose) {
 
             so.getClient().post(url, me.toJSON(), function(data) {
 
+                console.warn(me.name, data);
+
                 if(!data.id) {
-                    throw new ComposeError("Error creating subscription on stream " + me.container().name);
+                    return reject(new ComposeError("Error creating subscription on stream " + me.container().name));
                 }
 
                 me.id = data.id;
@@ -2782,10 +2793,9 @@ solib.setup = function(compose) {
         return me.getSubscriptions().refresh().then(function() {
 
             var subscription = me.getSubscriptions().get(defaultCallback, "callback");
+
             if(!subscription) {
-
                 subscription = me.addSubscription(me.__$pubsub);
-
                 return subscription.create().then(listener);
             }
             else {
@@ -3958,13 +3968,14 @@ adapter.initialize = function(compose) {
     mqttConf.path = mqttConf.path.length && mqttConf.path.substr(0,1) !== '/' ? '/' + mqttConf.path  : mqttConf.path ;
 
     var topics = {
-        from: "/topic/" + ApiTokenKey + '.from',
-        to: "/topic/" + ApiTokenKey + '.to'
+        from: ApiTokenKey + '/from',
+        to: ApiTokenKey + '/to'
 
         , stream: function(handler) {
 
             var _key = handler.subscription.destination || ApiTokenKey;
-            var streamTopic = '/topic/'+ _key + '.' + handler.container().ServiceObject.id +'.streams.'+ handler.stream.name +'.updates';
+
+            var streamTopic = _key + '/' + handler.container().ServiceObject.id +'/streams/'+ handler.stream.name +'/updates';
 
             d("Stream topic " + streamTopic);
             return streamTopic;
@@ -3972,11 +3983,12 @@ adapter.initialize = function(compose) {
 
         , actions: function(handler) {
 
-            var actionsTopic = '/topic/'+ handler.actions.container().id + '.actions';
+            var actionsTopic = handler.actions.container().id + '/actions';
 
             d("Actions topic " + actionsTopic);
             return actionsTopic;
         }
+
     };
 
     var request = {
@@ -3996,7 +4008,8 @@ adapter.initialize = function(compose) {
 
             client(mqtt.connect(mqttConf.proto + "://" + mqttConf.host + ":" + mqttConf.port,  {
                 username: mqttConf.user,
-                password: mqttConf.password
+                password: mqttConf.password,
+                keepalive: 0,
             }));
 
             client().on('close', function() {
@@ -4025,10 +4038,8 @@ adapter.initialize = function(compose) {
                     d("Subscribed to " + topics.to);
 
                     client().on('message', function(topic, message, response) {
-
                         if(topic === topics.to) {
                             d("New message for topic.to");
-                            console.log(message.toString())
                             var resp = JSON.parse(message.toString())
                             queue.handleResponse(resp);
                         }
@@ -4083,9 +4094,8 @@ adapter.initialize = function(compose) {
         };
 
         // 3rd arg has qos option { qos: 0|1|2 }
-        // @todo check which one fit better in this case
         d("Sending message..");
-        client().publish(topics.from, JSON.stringify(request), { qos: 0 /*, retain: true*/ }, function() {
+        client().publish(topics.from, JSON.stringify(request), { qos: 2 /*, retain: true*/ }, function() {
             d("Message published");
         });
     };
@@ -4104,7 +4114,7 @@ adapter.initialize = function(compose) {
 
         d("Listening to " + topic);
 
-        client.on('message', function(srctopic, message, response) {
+        client().on('message', function(srctopic, message, response) {
 
 //            console.log(src);
 //            console.log(message.toString());
@@ -4124,7 +4134,7 @@ adapter.initialize = function(compose) {
             }
         });
 
-        client.subscribe(topic, function() {
+        client().subscribe(topic, function() {
             d('Subscribed to subscription topic');
         });
 
@@ -4500,9 +4510,11 @@ httplib.initialize = function(compose) {
                 return;
             }
             if (http.status >= 400) {
-                handler.emitter.trigger('error', {
+                var err = {
                     code: http.status
-                });
+                }
+                handler.emitter.trigger('error', err);
+                handler.onError(err)
             }
             else {
 
@@ -4512,17 +4524,19 @@ httplib.initialize = function(compose) {
                     data = JSON.parse(data);
                 }
                 catch(e) {}
-                handler.emitter.trigger('success', data);
+
+                handler.emitter && handler.emitter.trigger('success', data);
+                handler.onSuccess && handler.onSuccess(data);
             }
         };
 
         http.open(handler.method, url, true);
-        
+
         var headers = {
             "Content-type": "application/json",
             "Authorization": compose.config.apiKey
         };
-        
+
         if(handler.headers) {
             for(var key in handler.headers) {
                 headers[ key ] = handler.headers[key];

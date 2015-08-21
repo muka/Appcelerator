@@ -1239,13 +1239,13 @@ client.setup = function(compose) {
          * Normalize the returned body
          *
          * @deprecated Ensure to fix this code once the bridge is stable
-         * */
+         */
         this.normalizeBody = function(message) {
 
             if(typeof message === 'string') {
                 message = parseJson(message);
             }
-            
+
             if(message.body && typeof message.body === 'string') {
                 message.body = parseJson(message.body);
             }
@@ -1267,7 +1267,7 @@ client.setup = function(compose) {
             if(message.headers && message.headers.messageId !== undefined) {
                 message.messageId = message.headers.messageId;
             }
-            
+
             return message;
         };
 
@@ -1281,24 +1281,26 @@ client.setup = function(compose) {
                 d(response);
                 return;
             }
-            
+
             var errorResponse = this.isErrorResponse(response.body);
             if(response.messageId) {
 
                 var handler = this.get(response.messageId);
 
                 if(handler) {
-                    
+
                     if(errorResponse) {
-                        handler.emitter.trigger('error', response.body);
+                        handler.emitter && handler.emitter.trigger('error', response.body, message, raw);
+                        handler.onError && handler.onError(response.body, message, raw)
                     }
                     else {
                         //a callback is provided to handle the dispatch the event
-                        if(handler.onQueueData && typeof handler.onQueueData === 'function') {
+                        if(handler.onQueueData) {
                             handler.onQueueData.call(handler, response, message);
                         }
                         else {
-                            handler.emitter.trigger(handler.emitterChannel || 'success', response.body);
+                            handler.emitter && handler.emitter.trigger(handler.emitterChannel || 'success', response.body, message, raw);
+                            handler.onSuccess(response.body, message, raw);
                         }
                     }
 
@@ -1313,7 +1315,7 @@ client.setup = function(compose) {
 
             d("[queue manager] Message not found, id " + ((response.messageId) ? response.messageId : '[not set]'));
 //                this.triggerAll('data', response, message);
-            this.receiver() && this.receiver().notify('data', response, message);
+            this.receiver() && this.receiver().notify('data', response, message, raw);
 
             return false;
         };
@@ -1432,11 +1434,16 @@ client.setup = function(compose) {
         this.ServiceObject = so;
         this.queue = queueManager;
 
-        this.requestHandler = new RequestHandler();
-        this.requestHandler.container(this);
+        this.requestHandler = this.createRequestHandler()
 
         this.initialize();
     };
+
+    Client.prototype.createRequestHandler = function() {
+        var requestHandler = new RequestHandler();
+        requestHandler.container(this);
+        return requestHandler
+    }
 
     Client.prototype.initialize = function() {
         this.adapter().initialize && this.adapter().initialize.call(this, compose);
@@ -1457,48 +1464,50 @@ client.setup = function(compose) {
     };
 
     Client.prototype.request = function(method, path, body, success, error, headers) {
-        
+
         var reqconf = {
             method: method,
             path: path,
             body: body,
             headers: headers || null
         };
-        
+
         var params;
-        
+
         if(arguments.length === 1) {
             params = arguments[0]
             method = arguments[0].method
         }
-        
+
         if(arguments.length === 2) {
             params = arguments[1]
             reqconf.method = method
         }
-        
+
         if(params) {
-            
+
             reqconf.method = params.method || reqconf.method;
             reqconf.path = params.path;
             reqconf.body = params.body;
             reqconf.headers = params.headers || null;
-            
+
             success = params.success;
             error = params.error;
         }
-        
+
         var me = this;
-        me.requestHandler.setConf(reqconf);
 
-        d("[client] Requesting " + this.requestHandler.method + " " + this.requestHandler.path);
+        var handler = this.createRequestHandler()
+        handler.setConf(reqconf);
 
-        success && me.requestHandler.emitter.once('success', success);
-        error && me.requestHandler.emitter.once('error', error);
+        handler.onSuccess = success;
+        handler.onError = error;
+
+        d("[client] Requesting " + handler.method + " " + handler.path);
 
         this.connect()
             .then(function() {
-                me.adapter().request(me.requestHandler);
+                me.adapter().request(handler);
             })
             .catch(function(err) {
                 d("Connection error");
@@ -2167,8 +2176,10 @@ solib.setup = function(compose) {
 
             so.getClient().post(url, me.toJSON(), function(data) {
 
+                console.warn(me.name, data);
+
                 if(!data.id) {
-                    throw new ComposeError("Error creating subscription on stream " + me.container().name);
+                    return reject(new ComposeError("Error creating subscription on stream " + me.container().name));
                 }
 
                 me.id = data.id;
@@ -2777,10 +2788,9 @@ solib.setup = function(compose) {
         return me.getSubscriptions().refresh().then(function() {
 
             var subscription = me.getSubscriptions().get(defaultCallback, "callback");
+
             if(!subscription) {
-
                 subscription = me.addSubscription(me.__$pubsub);
-
                 return subscription.create().then(listener);
             }
             else {
@@ -4058,15 +4068,15 @@ var exports = {}; var module = { exports: exports };
 /*******************************************************************************
  Copyright 2015 CREATE-NET
  Developed for COMPOSE project (compose-project.eu)
- 
+
  @author Luca Capra <luca.capra@create-net.org>
- 
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -4122,12 +4132,15 @@ adapter.initialize = function(compose) {
 //            }
 
             if (status >= 400) {
-                handler.emitter.trigger('error', data ? data : {
+                var err = {
                     code: status
-                });
+                }
+                handler.emitter.trigger('error', err);
+                handler.onError(err)
             }
             else {
-                handler.emitter.trigger('success', data);
+                handler.emitter && handler.emitter.trigger('success', data);
+                handler.onSuccess && handler.onSuccess(data);
             }
         };
 

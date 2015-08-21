@@ -198,9 +198,8 @@ adapter.initialize = function(compose) {
 //        console.log("#### mqtt request body", request);
 
         // 3rd arg has qos option { qos: 0|1|2 }
-        // @todo check which one fit better in this case
         d("Sending message..");
-        client.publish(topics.from, JSON.stringify(request), { qos: 0 /*, retain: true*/ }, function() {
+        client.publish(topics.from, JSON.stringify(request), { qos: 2 /*, retain: true*/ }, function() {
             d("Message published");
         });
 
