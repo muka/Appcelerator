@@ -250,7 +250,7 @@ var Compose = function(config) {
     }
 
     if(compose.config.platform.browser) {
-        supportedTransports = ['stomp', 'http'];
+        supportedTransports = ['stomp', 'http', 'mqtt'];
     }
 
     if(supportedTransports.indexOf(compose.config.transport) < 0) {
