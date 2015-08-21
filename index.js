@@ -249,9 +249,9 @@ var Compose = function(config) {
         supportedTransports = ['mqtt', 'http'];
     }
 
-    if(compose.config.platform.browser) {
-        supportedTransports = ['stomp', 'http', 'mqtt'];
-    }
+    // if(compose.config.platform.browser) {
+    //     supportedTransports = ['stomp', 'http', 'mqtt'];
+    // }
 
     if(supportedTransports.indexOf(compose.config.transport) < 0) {
         throw new compose.error.ComposeError("Transport " + compose.config.transport
