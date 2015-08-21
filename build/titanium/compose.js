@@ -2176,8 +2176,6 @@ solib.setup = function(compose) {
 
             so.getClient().post(url, me.toJSON(), function(data) {
 
-                console.warn(me.name, data);
-
                 if(!data.id) {
                     return reject(new ComposeError("Error creating subscription on stream " + me.container().name));
                 }
