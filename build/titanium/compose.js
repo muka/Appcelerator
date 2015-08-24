@@ -1248,7 +1248,7 @@ client.setup = function(compose) {
 
             if(Object.keys(message).length === 0) {
                 message = {
-                    meta: {}
+                    meta: {},
                     body: {}
                 }
             }
