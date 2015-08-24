@@ -3880,28 +3880,28 @@ window.$$ComposeMqttClient = window.$$ComposeMqttClient || { ws: null, client: n
 
 var ws = function(val) {
     if(val !== undefined) {
-        window.$$ComposeMqttClient.ws = val;
+        window.$$ComposeMqttClient.ws = val
     }
-    return window.$$ComposeMqttClient.ws;
-};
+    return window.$$ComposeMqttClient.ws
+}
 
 var client = function(val) {
     if(val !== undefined) {
-        window.$$ComposeMqttClient.client = val;
+        window.$$ComposeMqttClient.client = val
     }
-    return window.$$ComposeMqttClient.client;
-};
+    return window.$$ComposeMqttClient.client
+}
 
-var reconnectTimes = 5;
-var tries = reconnectTimes;
+var reconnectTimes = 5
+var tries = reconnectTimes
 
 var DEBUG = false;
-var d = function(m) { (DEBUG === true || (DEBUG > 19)) && console.log("" + m); };
+var d = function(m) { (DEBUG === true || (DEBUG > 19)) && console.log("" + m); }
 
 var parseUrl = function(href) {
 
-    var parser = document.createElement('a');
-    parser.href = href;
+    var parser = document.createElement('a')
+    parser.href = href
 
     var o = {
         protocol: null,
@@ -3911,19 +3911,19 @@ var parseUrl = function(href) {
         search: null,
         hash: null,
         host: null
-    };
+    }
 
     for(var i in o) {
         if(parser[i]) {
-            o[i] = parser[i];
+            o[i] = parser[i]
         }
     }
 
-    o.path = o.pathname;
-    o.host = o.hostname;
+    o.path = o.pathname
+    o.host = o.hostname
 
-    parser = null;
-    return o;
+    parser = null
+    return o
 };
 
 
@@ -3936,10 +3936,10 @@ adapter.initialize = function(compose) {
 
     var queue = this.queue;
 
-    var host;
-    if (compose.config.url) {
-        var urlinfo = parseUrl(compose.config.url);
-        host = urlinfo.hostname;
+    var host = compose.config.mqtt.host
+    if (!host && compose.config.url) {
+        var urlinfo = parseUrl(compose.config.url)
+        host = urlinfo.hostname
     }
 
     var ApiTokenKey = compose.config.apiKeyToken;
