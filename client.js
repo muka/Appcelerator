@@ -382,6 +382,13 @@ client.setup = function(compose) {
                 message = parseJson(message);
             }
 
+            if(Object.keys(message).length === 0) {
+                message = {
+                    meta: {}
+                    body: {}
+                }
+            }
+
             if(message.body && typeof message.body === 'string') {
                 message.body = parseJson(message.body);
             }
