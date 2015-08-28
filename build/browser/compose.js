@@ -4046,6 +4046,7 @@ adapter.initialize = function(compose) {
                         if(topic === topics.to) {
                             d("New message for topic.to");
                             var resp = JSON.parse(message.toString())
+                            // console.warn(resp)
                             queue.handleResponse(resp);
                         }
                     });

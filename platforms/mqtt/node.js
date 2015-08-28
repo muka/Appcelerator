@@ -241,9 +241,6 @@ adapter.initialize = function(compose) {
 
         client.on('message', function(srctopic, message, response) {
 
-//            console.log(src);
-//            console.log(message.toString());
-
             if(topic === srctopic) {
 
                 d("New message from subscription topic");

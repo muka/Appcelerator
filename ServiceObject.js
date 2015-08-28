@@ -288,7 +288,7 @@ solib.setup = function(compose) {
                 headers: {
                     'Content-Type': 'text/plain'
                 },
-                data: body.toString(),
+                body: body.toString(),
                 success: function(data) {
 
                     me.id = data.id;

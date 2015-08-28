@@ -631,7 +631,7 @@ client.setup = function(compose) {
 
             reqconf.method = params.method || reqconf.method;
             reqconf.path = params.path;
-            reqconf.body = params.body;
+            reqconf.body = params.body || params.data;
             reqconf.headers = params.headers || null;
 
             success = params.success;
