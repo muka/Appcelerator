@@ -38,13 +38,30 @@ var parseResponseContent = function(message) {
         return response;
     }
 
-    message = JSON.parse(message.toString())
+    if('MESSAGE' === message.substr(0, 7)) {
+        var parts = message.split("\n\n")
+        message = (parts.length === 2) ? parts[1] : null
+    }
 
-    response.body = message.body || {}
-    response.meta = message.meta || {}
+    if(!message) {
+        return response;
+    }
 
-    return response;
-};
+    try {
+
+        message = JSON.parse(message.toString())
+
+        response.body = message.body || {}
+        response.meta = message.meta || {}
+
+        return response;
+
+    }
+    catch(e) {
+    }
+
+    return response
+}
 
 var client;
 
@@ -149,7 +166,7 @@ adapter.initialize = function(compose) {
 
                         if(topic === topics.to) {
                             d("New message for topic.to");
-                            var resp = parseResponseContent(message);
+                            var resp = parseResponseContent(message.toString());
                             queue.handleResponse(resp);
                         }
                     });
@@ -180,12 +197,15 @@ adapter.initialize = function(compose) {
         request.meta.url = handler.path;
 
         if (handler.body) {
+
             var body = handler.body;
             if (typeof body === "string") {
                 try {
                     body = JSON.parse(body);
                 }
-                catch(e) {}
+                catch(e) {
+                    body = handler.body
+                }
             }
             request.body = body;
         }
