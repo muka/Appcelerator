@@ -1500,7 +1500,7 @@ client.setup = function(compose) {
 
             reqconf.method = params.method || reqconf.method;
             reqconf.path = params.path;
-            reqconf.body = params.body;
+            reqconf.body = params.body || params.data;
             reqconf.headers = params.headers || null;
 
             success = params.success;
@@ -2374,7 +2374,7 @@ solib.setup = function(compose) {
                 headers: {
                     'Content-Type': 'text/plain'
                 },
-                data: body.toString(),
+                body: body.toString(),
                 success: function(data) {
 
                     me.id = data.id;
