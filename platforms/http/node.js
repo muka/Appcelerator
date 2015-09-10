@@ -125,8 +125,10 @@ adapter.initialize = function(compose) {
 
                         d("Exception parsing response JSON");
                         d(e);
-
+                        
                         handler.emitter.trigger('error', e);
+                        handler.onError(err)
+                        return
                     }
                 }
 

@@ -27,6 +27,15 @@ solib.setup = function(compose) {
     var ValidationError = compose.error.ValidationError;
     var Emitter = compose.lib.Client.Emitter;
 
+    var parseJson = function(data) {
+        try {
+            return JSON.parse(data)
+        }
+        catch(e) {
+            throw new Error("Cannot parse JSON:\n " + data)
+        }
+    }
+
     var getApi = function() {
         return compose;
     };
@@ -1768,7 +1777,7 @@ solib.setup = function(compose) {
         return new Promise(function(resolve, reject) {
             client.get('/', null, function(data) {
                 client.ServiceObject = null;
-                var json = typeof data === 'string' ? JSON.parse(data) : data;
+                var json = typeof data === 'string' ? parseJson(data) : data;
                 resolve(json);
             }, reject);
         }).bind(client);
@@ -1796,7 +1805,7 @@ solib.setup = function(compose) {
         return new Promise(function(resolve, reject) {
             client.post('/search', params, function(data) {
                 client.ServiceObject = null;
-                var json = typeof data === 'string' ? JSON.parse(data) : data;
+                var json = typeof data === 'string' ? parseJson(data) : data;
                 resolve(json);
             }, reject);
         }).bind(client);
