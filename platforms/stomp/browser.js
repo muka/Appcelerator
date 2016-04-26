@@ -87,6 +87,8 @@ adapter.initialize = function(compose) {
 
     var ApiTokenKey = compose.config.apiKeyToken;
 
+    compose.config.stomp = compose.config.stomp || {};
+
     var proto = compose.config.stomp.proto || null;
     var secure = compose.config.stomp.secure;
 
@@ -97,7 +99,6 @@ adapter.initialize = function(compose) {
     var port  = compose.config.stomp.port || (secure ? 61624 : 61623);
     proto = secure ? "wss" : "ws";
 
-    compose.config.stomp = compose.config.stomp || {};
     var stompConf = {
         proto: proto,
         host: host || "api.servioticy.com",
@@ -147,13 +148,13 @@ adapter.initialize = function(compose) {
         // 3 closed
 
         var needConnection = function() {
-            
+
             if(!ws()) {
                 return true;
             }
 
             if(client) {
-                
+
                 d("WS state " + ws().readyState);
                 switch(ws().readyState) {
                     case 0:
@@ -213,12 +214,12 @@ adapter.initialize = function(compose) {
 
                     d("Subscribe to " + topics.to);
                     client().subscribe(topics.to, function(raw) {
-                        
+
                         d("New message from topic " + topics.to);
-                        
+
                         var message = JSON.parse(raw.body);
                         message.messageId = raw.headers.messageId;
-                        
+
                         queue.handleResponse(message);
                     });
 
@@ -291,9 +292,9 @@ adapter.initialize = function(compose) {
 
         d("[stomp client] Listening to " + topic);
         client().subscribe(topic, function(raw) {
-            
+
             d("[stomp client] New message from topic " + topic);
-            
+
             var message = {
                 body: JSON.parse(raw.body),
                 messageId: uuid
