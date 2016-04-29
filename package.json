@@ -10,7 +10,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jasmine-node test/spec/  --captureExceptions",
+    "test": "node_modules/mocha/bin/mocha test/spec/*.js",
     "jsdoc": "jsdoc ./ -c=jsdoc.json -l -r"
   },
   "keywords": [
@@ -24,12 +24,12 @@
   },
   "dependencies": {
     "bluebird": "*",
+    "mocha": "^2.4.5",
     "mqtt": "*",
     "request": "^2.55.0",
     "stompjs": "*"
   },
   "devDependencies": {
-    "jasmine-node": "*",
     "underscore": "*"
   },
   "browserify": {},

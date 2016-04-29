@@ -4,15 +4,15 @@ exports.definition = {
     "URL": null,
     "public": false,
     "streams": {
-        "location": {
+        "mylocation": {
             "description": "SO location",
             "type": "sensor",
             "channels": {
                 "latitude": {
-                    "type": "String"
+                    "type": "number"
                 },
                 "longitude": {
-                    "type": "String"
+                    "type": "number"
                 }
             }
         },
@@ -20,13 +20,13 @@ exports.definition = {
             type: "sensor",
             channels: {
                 "testnumeric": {
-                    type: "Number"
+                    type: "number"
                 },
                 "testtext": {
-                    type: "String"
+                    type: "string"
                 },
                 "location": {
-                    type: "String"
+                    type: "geo_point"
                 }
             }
         }
